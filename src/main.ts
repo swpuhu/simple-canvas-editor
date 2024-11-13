@@ -4,6 +4,8 @@ import { EditableText } from './EditableText';
 import { Ruler } from './Ruler';
 import { FileDrop } from './FileDrop';
 import { SpriteLoader } from './SpriteLoader';
+import { SelectionController } from './SelectionController';
+import { TransformPanel } from './TransformPanel';
 
 // 创建Pixi应用
 async function initApp() {
@@ -57,17 +59,17 @@ async function initApp() {
                 );
 
                 // 为每个Sprite添加交互
-                sprites.forEach(sprite => {
-                    // 添加点击处理
-                    sprite.on('pointerdown', event => {
-                        // 可以在这里添加选中、删除等操作
-                        console.log(
-                            'Sprite clicked at',
-                            event.global.x,
-                            event.global.y
-                        );
-                    });
-                });
+                // sprites.forEach(sprite => {
+                //     // 添加点击处理
+                //     sprite.on('pointerdown', event => {
+                //         // 可以在这里添加选中、删除等操作
+                //         console.log(
+                //             'Sprite clicked at',
+                //             event.global.x,
+                //             event.global.y
+                //         );
+                //     });
+                // });
             } catch (error) {
                 console.error('加载Sprite失败:', error);
             }
@@ -76,6 +78,9 @@ async function initApp() {
             console.error('文件处理错误:', error);
         },
     });
+
+    const selectionController = new SelectionController(app);
+    const transformPanel = new TransformPanel(app, selectionController);
 }
 
 initApp();
