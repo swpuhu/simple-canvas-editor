@@ -1,5 +1,5 @@
 import './style.css';
-import { Application } from 'pixi.js';
+import { Application, Container } from 'pixi.js';
 import { EditableText } from './EditableText';
 import { Ruler } from './Ruler';
 import { FileDrop } from './FileDrop';
@@ -22,12 +22,21 @@ async function initApp() {
     // 创建SpriteLoader实例
     const spriteLoader = new SpriteLoader(app);
 
+    const RULER_THICKNESS = 20;
     const ruler = new Ruler({
         width: app.screen.width,
         height: app.screen.height,
+        thickness: RULER_THICKNESS,
     });
 
     app.stage.addChild(ruler);
+
+    const mainZone = new Container();
+    mainZone.x = RULER_THICKNESS;
+    mainZone.y = RULER_THICKNESS;
+    mainZone.width = app.screen.width - RULER_THICKNESS;
+    mainZone.height = app.screen.height - RULER_THICKNESS;
+    app.stage.addChild(mainZone);
 
     // 创建拖放区域
     const dropZone = document.querySelector('#app') as HTMLElement;
@@ -39,7 +48,7 @@ async function initApp() {
         onDrop: async (urls: string[], event: DragEvent) => {
             try {
                 // 获取画布相对于视口的位置
-                const canvasBounds = app.view.getBoundingClientRect();
+                const canvasBounds = app.canvas.getBoundingClientRect();
 
                 // 计算鼠标相对于画布的位置
                 const x = event.clientX - canvasBounds.left;
@@ -54,9 +63,12 @@ async function initApp() {
                             y, // 使用鼠标位置
                             anchor: { x: 0.5, y: 0.5 }, // 使用中心点作为锚点
                             interactive: true,
+                            scale: { x: 1, y: 1 },
                         },
+                        parent: mainZone,
                     }))
                 );
+                window.sprites = sprites;
 
                 // 为每个Sprite添加交互
                 // sprites.forEach(sprite => {

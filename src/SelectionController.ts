@@ -25,20 +25,21 @@ export class SelectionController {
     constructor(app: Application) {
         this.app = app;
         this.initializeEvents();
+        this.createControlBox();
+        this.createTransformHandles();
     }
 
     private initializeEvents(): void {
         // this.app.stage.eventMode = 'dynamic';
         this.app.stage.eventMode = 'static';
         this.app.stage.hitArea = this.app.screen;
-        console.log(this.app.stage.width, this.app.stage.height);
         this.app.stage.on('pointerdown', this.onStageClick);
 
         // 添加全局事件监听
     }
 
     @autobind
-    private onStageClick(event: any): void {
+    private onStageClick(event: FederatedPointerEvent): void {
         console.log('onStageClick', event);
         const target = event.target;
 
@@ -52,10 +53,14 @@ export class SelectionController {
     }
 
     private selectSprite(sprite: Sprite): void {
+        if (!this.controlBox) {
+            return;
+        }
         this.clearSelection();
         this.selectedSprite = sprite;
-        this.createControlBox();
-        this.createTransformHandles();
+
+        this.controlBox.visible = true;
+        this.updateSizeAndControlBoxPos(sprite);
 
         // 为选中的精灵添加拖拽功能
         sprite.eventMode = 'static';
@@ -63,24 +68,39 @@ export class SelectionController {
         sprite.on('pointerdown', this.onSpriteDragStart);
     }
 
-    private createControlBox(): void {
-        if (!this.selectedSprite) return;
+    private updateSizeAndControlBoxPos(sprite: Sprite): void {
+        if (!this.controlBox || !this.handles.length) {
+            return;
+        }
+        const width = sprite.width;
+        const height = sprite.height;
 
-        this.controlBox = new Graphics();
-        this.controlBox.lineStyle(2, 0x00ff00);
-        this.controlBox.drawRect(
-            -this.selectedSprite.width * this.selectedSprite.anchor.x,
-            -this.selectedSprite.height * this.selectedSprite.anchor.y,
-            this.selectedSprite.width,
-            this.selectedSprite.height
+        this.controlBox.width = width;
+        this.controlBox.height = height;
+
+        const spriteWorldPos = sprite.getGlobalPosition();
+        const posInControlBox = this.controlBox.parent.toLocal(spriteWorldPos);
+        this.controlBox.x = posInControlBox.x;
+        this.controlBox.y = posInControlBox.y;
+
+        this.controlBox.rect(
+            -width * sprite.anchor.x,
+            -height * sprite.anchor.y,
+            width,
+            height
         );
+        this.controlBox.stroke({
+            width: 2,
+            color: 0x00ff00,
+        });
+    }
 
-        this.selectedSprite.addChild(this.controlBox);
+    private createControlBox(): void {
+        this.controlBox = new Graphics();
+        this.app.stage.addChild(this.controlBox);
     }
 
     private createTransformHandles(): void {
-        if (!this.selectedSprite) return;
-
         // 创建8个控制点
         const positions = [
             { x: 0, y: 0 }, // 左上
@@ -95,28 +115,24 @@ export class SelectionController {
 
         positions.forEach((pos, index) => {
             const handle = new Graphics();
-            handle.beginFill(0xffffff);
-            handle.lineStyle(1, 0x00ff00);
-            handle.drawCircle(0, 0, 5);
-            handle.endFill();
-
-            handle.x =
-                this.selectedSprite!.width * pos.x -
-                this.selectedSprite!.width * this.selectedSprite!.anchor.x;
-            handle.y =
-                this.selectedSprite!.height * pos.y -
-                this.selectedSprite!.height * this.selectedSprite!.anchor.y;
-
+            handle.circle(0, 0, 5);
+            handle.fill(0xffbb66);
+            handle.stroke({
+                width: 1,
+                color: 0x00ff00,
+            });
             handle.eventMode = 'static';
             handle.cursor = this.getHandleCursor(index);
+
+            handle.visible = false;
 
             // 简化事件监听，只需要处理 pointerdown
             handle.on('pointerdown', event => {
                 this.onHandleDragStart(event, index);
             });
 
-            this.selectedSprite!.addChild(handle);
             this.handles.push(handle);
+            this.controlBox!.addChild(handle);
         });
     }
 
@@ -243,18 +259,20 @@ export class SelectionController {
     }
 
     private clearSelection(): void {
+        if (!this.controlBox) {
+            return;
+        }
+        this.controlBox.visible = false;
         if (this.selectedSprite) {
             // 移除拖拽事件
             this.selectedSprite.off('pointerdown');
             if (this.controlBox) {
                 this.selectedSprite.removeChild(this.controlBox);
-                this.controlBox = null;
             }
 
             this.handles.forEach(handle => {
                 this.selectedSprite!.removeChild(handle);
             });
-            this.handles = [];
 
             this.selectedSprite = null;
         }

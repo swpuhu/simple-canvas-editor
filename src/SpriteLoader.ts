@@ -4,6 +4,7 @@ import {
     Texture,
     AssetInitOptions,
     Assets,
+    Container,
 } from 'pixi.js';
 
 export interface SpriteOptions {
@@ -32,7 +33,8 @@ export class SpriteLoader {
      */
     public async loadSprite(
         url: string,
-        options: SpriteOptions = {}
+        options: SpriteOptions = {},
+        parent: Container = this.app.stage
     ): Promise<Sprite> {
         try {
             // v8中的纹理加载方式
@@ -41,7 +43,7 @@ export class SpriteLoader {
             const sprite = Sprite.from(texture);
 
             this.applySpriteOptions(sprite, options);
-            this.app.stage.addChild(sprite);
+            parent.addChild(sprite);
 
             return sprite;
         } catch (error) {
@@ -91,12 +93,13 @@ export class SpriteLoader {
     async loadMultipleSprites(
         spriteConfigs: Array<{
             url: string;
-            options?: any;
+            options?: SpriteOptions;
+            parent?: Container;
         }>
     ) {
         const sprites = await Promise.all(
             spriteConfigs.map(config =>
-                this.loadSprite(config.url, config.options)
+                this.loadSprite(config.url, config.options, config.parent)
             )
         );
         return sprites;
