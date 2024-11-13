@@ -60,7 +60,7 @@ export class SelectionController {
         this.selectedSprite = sprite;
 
         this.controlBox.visible = true;
-        this.updateSizeAndControlBoxPos(sprite);
+        this.updateControlBoxSizeAndPos(sprite);
 
         // 为选中的精灵添加拖拽功能
         sprite.eventMode = 'static';
@@ -68,21 +68,23 @@ export class SelectionController {
         sprite.on('pointerdown', this.onSpriteDragStart);
     }
 
-    private updateSizeAndControlBoxPos(sprite: Sprite): void {
-        if (!this.controlBox || !this.handles.length) {
+    private updateControlBoxPos(sprite: Sprite): void {
+        if (!this.controlBox) {
             return;
         }
-        const width = sprite.width;
-        const height = sprite.height;
-
-        this.controlBox.width = width;
-        this.controlBox.height = height;
-
         const spriteWorldPos = sprite.getGlobalPosition();
         const posInControlBox = this.controlBox.parent.toLocal(spriteWorldPos);
         this.controlBox.x = posInControlBox.x;
         this.controlBox.y = posInControlBox.y;
+    }
 
+    private updateControlBoxSize(sprite: Sprite): void {
+        if (!this.controlBox) {
+            return;
+        }
+        this.controlBox.clear();
+        const width = sprite.width;
+        const height = sprite.height;
         this.controlBox.rect(
             -width * sprite.anchor.x,
             -height * sprite.anchor.y,
@@ -95,6 +97,65 @@ export class SelectionController {
         });
     }
 
+    private updateControlBoxSizeAndPos(sprite: Sprite): void {
+        if (!this.controlBox || !this.handles.length) {
+            return;
+        }
+        this.updateControlBoxSize(sprite);
+        this.updateControlBoxPos(sprite);
+        this.updateHandlesPos(sprite);
+    }
+
+    private updateHandlesPos(sprite: Sprite): void {
+        if (!this.handles.length || !this.controlBox) {
+            return;
+        }
+        const width = sprite.width;
+        const height = sprite.height;
+        const leftTop = {
+            x: -width * sprite.anchor.x,
+            y: -height * sprite.anchor.y,
+        };
+        const leftBottom = {
+            x: -width * sprite.anchor.x,
+            y: height * sprite.anchor.y,
+        };
+        const rightTop = {
+            x: width * sprite.anchor.x,
+            y: -height * sprite.anchor.y,
+        };
+        const rightBottom = {
+            x: width * sprite.anchor.x,
+            y: height * sprite.anchor.y,
+        };
+        // { x: 0, y: 0 }, // 左上
+        // { x: 0.5, y: 0 }, // 上中
+        // { x: 1, y: 0 }, // 右上
+        // { x: 1, y: 0.5 }, // 右中
+        // { x: 1, y: 1 }, // 右下
+        // { x: 0.5, y: 1 }, // 下中
+        // { x: 0, y: 1 }, // 左下
+        // { x: 0, y: 0.5 }, // 左中
+
+        this.handles.forEach((handle, index) => {
+            handle.clear();
+            if (index === 0) {
+                handle.circle(leftTop.x, leftTop.y, 5);
+                handle.fill(0xffbb66);
+            } else if (index === 1) {
+                handle.circle(rightTop.x, rightTop.y, 5);
+                handle.fill(0xffbb66);
+            } else if (index === 2) {
+                handle.circle(rightBottom.x, rightBottom.y, 5);
+                handle.fill(0xffbb66);
+            } else if (index === 3) {
+                handle.circle(leftBottom.x, leftBottom.y, 5);
+                handle.fill(0xffbb66);
+            }
+            handle.visible = true;
+        });
+    }
+
     private createControlBox(): void {
         this.controlBox = new Graphics();
         this.app.stage.addChild(this.controlBox);
@@ -104,23 +165,17 @@ export class SelectionController {
         // 创建8个控制点
         const positions = [
             { x: 0, y: 0 }, // 左上
-            { x: 0.5, y: 0 }, // 上中
+            // { x: 0.5, y: 0 }, // 上中
             { x: 1, y: 0 }, // 右上
-            { x: 1, y: 0.5 }, // 右中
+            // { x: 1, y: 0.5 }, // 右中
             { x: 1, y: 1 }, // 右下
-            { x: 0.5, y: 1 }, // 下中
+            // { x: 0.5, y: 1 }, // 下中
             { x: 0, y: 1 }, // 左下
-            { x: 0, y: 0.5 }, // 左中
+            // { x: 0, y: 0.5 }, // 左中
         ];
 
         positions.forEach((pos, index) => {
             const handle = new Graphics();
-            handle.circle(0, 0, 5);
-            handle.fill(0xffbb66);
-            handle.stroke({
-                width: 1,
-                color: 0x00ff00,
-            });
             handle.eventMode = 'static';
             handle.cursor = this.getHandleCursor(index);
 
@@ -189,6 +244,7 @@ export class SelectionController {
 
             this.selectedSprite.x = this.originalPosition.x + deltaX;
             this.selectedSprite.y = this.originalPosition.y + deltaY;
+            this.updateControlBoxPos(this.selectedSprite);
         }
 
         if (this.isResizing && this.activeHandle) {
