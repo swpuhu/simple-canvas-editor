@@ -7,6 +7,10 @@ import {
     FederatedPointerEvent,
 } from 'pixi.js';
 
+const EDGE_COLOR = 0xffbb66;
+const HANDLE_COLOR = 0xffbb66;
+const ROTATE_HANDLE_COLOR = 0x00ffbb;
+
 export class SelectionController {
     private app: Application;
     private selectedSprite: Sprite | null = null;
@@ -18,15 +22,20 @@ export class SelectionController {
     private isDraggingSprite = false;
     private isResizing = false;
     private activeHandle: Graphics | null = null;
+    private rotateHandle: Graphics | null = null;
     private startPosition = new Point();
     private startSize = { width: 0, height: 0 };
     private resizeStartPoint = new Point();
+    private isRotating = false;
+    private startRotation = 0;
+    private startAngle = 0;
 
     constructor(app: Application) {
         this.app = app;
         this.initializeEvents();
         this.createControlBox();
         this.createTransformHandles();
+        this.createRotateHandle();
     }
 
     private initializeEvents(): void {
@@ -68,14 +77,16 @@ export class SelectionController {
         sprite.on('pointerdown', this.onSpriteDragStart);
     }
 
-    private updateControlBoxPos(sprite: Sprite): void {
+    private updateControlBoxPos(sprite: Sprite): Readonly<Point> {
         if (!this.controlBox) {
-            return;
+            return new Point();
         }
         const spriteWorldPos = sprite.getGlobalPosition();
         const posInControlBox = this.controlBox.parent.toLocal(spriteWorldPos);
         this.controlBox.x = posInControlBox.x;
         this.controlBox.y = posInControlBox.y;
+        this.controlBox.angle = sprite.angle;
+        return this.controlBox.position;
     }
 
     private updateControlBoxSize(sprite: Sprite): void {
@@ -93,7 +104,8 @@ export class SelectionController {
         );
         this.controlBox.stroke({
             width: 2,
-            color: 0x00ff00,
+            color: EDGE_COLOR,
+            alignment: 0.5,
         });
     }
 
@@ -101,9 +113,28 @@ export class SelectionController {
         if (!this.controlBox || !this.handles.length) {
             return;
         }
-        this.updateControlBoxSize(sprite);
         this.updateControlBoxPos(sprite);
+        this.updateControlBoxSize(sprite);
         this.updateHandlesPos(sprite);
+        this.updateRotateHandlePos(sprite);
+    }
+
+    private updateRotateHandlePos(sprite: Sprite): void {
+        if (!this.rotateHandle) {
+            return;
+        }
+        const offsetY = Math.max(sprite.height * 0.2, 20);
+        const bottom = sprite.height * (1 - sprite.anchor.y);
+        this.rotateHandle.clear();
+        this.rotateHandle.moveTo(0, bottom);
+        this.rotateHandle.lineTo(0, bottom + offsetY);
+        this.rotateHandle.stroke({
+            width: 2,
+            color: ROTATE_HANDLE_COLOR,
+        });
+
+        this.rotateHandle.circle(0, bottom + offsetY, 5);
+        this.rotateHandle.fill(ROTATE_HANDLE_COLOR);
     }
 
     private updateHandlesPos(sprite: Sprite): void {
@@ -141,24 +172,32 @@ export class SelectionController {
             handle.clear();
             if (index === 0) {
                 handle.circle(leftTop.x, leftTop.y, 5);
-                handle.fill(0xffbb66);
             } else if (index === 1) {
                 handle.circle(rightTop.x, rightTop.y, 5);
-                handle.fill(0xffbb66);
             } else if (index === 2) {
                 handle.circle(rightBottom.x, rightBottom.y, 5);
-                handle.fill(0xffbb66);
             } else if (index === 3) {
                 handle.circle(leftBottom.x, leftBottom.y, 5);
-                handle.fill(0xffbb66);
             }
             handle.visible = true;
+            handle.fill(HANDLE_COLOR);
         });
     }
 
     private createControlBox(): void {
         this.controlBox = new Graphics();
         this.app.stage.addChild(this.controlBox);
+    }
+
+    private createRotateHandle(): void {
+        if (!this.controlBox) {
+            return;
+        }
+        this.rotateHandle = new Graphics();
+        this.rotateHandle.eventMode = 'static';
+        this.rotateHandle.cursor = 'grab';
+        this.rotateHandle.on('pointerdown', this.onRotateHandleDragStart);
+        this.controlBox.addChild(this.rotateHandle);
     }
 
     private createTransformHandles(): void {
@@ -189,6 +228,25 @@ export class SelectionController {
             this.handles.push(handle);
             this.controlBox!.addChild(handle);
         });
+    }
+    @autobind
+    private onRotateHandleDragStart(event: FederatedPointerEvent): void {
+        if (!this.selectedSprite) return;
+
+        event.stopPropagation();
+        this.isRotating = true;
+
+        // 计算初始角度
+        const center = this.getSpriteCenterGlobal();
+        const startPos = event.global;
+        this.startRotation =
+            (Math.atan2(startPos.y - center.y, startPos.x - center.x) * 180) /
+            Math.PI;
+        this.startAngle = this.selectedSprite.angle;
+
+        // 添加事件监听
+        this.app.stage.on('pointermove', this.onPointerMove);
+        this.app.stage.on('pointerup', this.onPointerUp);
     }
 
     private getHandleCursor(index: number): string {
@@ -245,15 +303,34 @@ export class SelectionController {
             this.selectedSprite.x = this.originalPosition.x + deltaX;
             this.selectedSprite.y = this.originalPosition.y + deltaY;
             this.updateControlBoxPos(this.selectedSprite);
-        }
-
-        if (this.isResizing && this.activeHandle) {
+        } else if (this.isResizing && this.activeHandle) {
             const newPosition = event.global;
             const deltaX = newPosition.x - this.resizeStartPoint.x;
             const deltaY = newPosition.y - this.resizeStartPoint.y;
 
             const handleIndex = this.handles.indexOf(this.activeHandle);
             this.resizeSprite(handleIndex, deltaX, deltaY);
+        } else if (this.isRotating) {
+            const center = this.getSpriteCenterGlobal();
+            const currentPos = event.global;
+
+            // 计算当前角度
+            const currentRotation =
+                (Math.atan2(currentPos.y - center.y, currentPos.x - center.x) *
+                    180) /
+                Math.PI;
+
+            // 计算角度差
+            let deltaRotation = currentRotation - this.startRotation;
+
+            // 设置新的角度
+            let newAngle = this.startAngle + deltaRotation;
+
+            // 可选：将角度限制在 0-360 度范围内
+            newAngle = ((newAngle % 360) + 360) % 360;
+
+            this.selectedSprite.angle = newAngle;
+            this.updateControlBoxSizeAndPos(this.selectedSprite);
         }
     }
 
@@ -309,6 +386,7 @@ export class SelectionController {
     private onPointerUp(): void {
         this.isDraggingSprite = false;
         this.isResizing = false;
+        this.isRotating = false;
         this.activeHandle = null;
         this.app.stage.off('pointermove', this.onPointerMove);
         this.app.stage.off('pointerup', this.onPointerUp);
@@ -356,5 +434,16 @@ export class SelectionController {
             // this.clearSelection();
             this.selectSprite(this.selectedSprite);
         }
+    }
+
+    // 辅助方法：获取精灵中心点的全局坐标
+    private getSpriteCenterGlobal(): Point {
+        if (!this.selectedSprite) return new Point();
+
+        const bounds = this.selectedSprite.getBounds();
+        return new Point(
+            bounds.x + bounds.width / 2,
+            bounds.y + bounds.height / 2
+        );
     }
 }

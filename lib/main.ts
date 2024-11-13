@@ -6,6 +6,7 @@ export async function main() {
     await app.init({
         width: 640,
         height: 480,
+        antialias: true,
     });
 
     document.body.appendChild(app.canvas);
