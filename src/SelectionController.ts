@@ -149,15 +149,33 @@ export class SelectionController {
         };
         const leftBottom = {
             x: -width * sprite.anchor.x,
-            y: height * sprite.anchor.y,
+            y: height * (1 - sprite.anchor.y),
         };
         const rightTop = {
-            x: width * sprite.anchor.x,
+            x: width * (1 - sprite.anchor.x),
             y: -height * sprite.anchor.y,
         };
         const rightBottom = {
-            x: width * sprite.anchor.x,
-            y: height * sprite.anchor.y,
+            x: width * (1 - sprite.anchor.x),
+            y: height * (1 - sprite.anchor.y),
+        };
+
+        const topMid = {
+            x: 0,
+            y: leftTop.y,
+        };
+        const bottomMid = {
+            x: 0,
+            y: leftBottom.y,
+        };
+
+        const leftMid = {
+            x: leftTop.x,
+            y: 0,
+        };
+        const rightMid = {
+            x: rightTop.x,
+            y: 0,
         };
         // { x: 0, y: 0 }, // 左上
         // { x: 0.5, y: 0 }, // 上中
@@ -171,15 +189,24 @@ export class SelectionController {
         this.handles.forEach((handle, index) => {
             handle.clear();
             if (index === 0) {
-                handle.circle(leftTop.x, leftTop.y, 5);
+                handle.position.set(leftTop.x, leftTop.y);
             } else if (index === 1) {
-                handle.circle(rightTop.x, rightTop.y, 5);
+                handle.position.set(topMid.x, topMid.y);
             } else if (index === 2) {
-                handle.circle(rightBottom.x, rightBottom.y, 5);
+                handle.position.set(rightTop.x, rightTop.y);
             } else if (index === 3) {
-                handle.circle(leftBottom.x, leftBottom.y, 5);
+                handle.position.set(rightMid.x, rightMid.y);
+            } else if (index === 4) {
+                handle.position.set(rightBottom.x, rightBottom.y);
+            } else if (index === 5) {
+                handle.position.set(bottomMid.x, bottomMid.y);
+            } else if (index === 6) {
+                handle.position.set(leftBottom.x, leftBottom.y);
+            } else if (index === 7) {
+                handle.position.set(leftMid.x, leftMid.y);
             }
             handle.visible = true;
+            handle.circle(0, 0, 5);
             handle.fill(HANDLE_COLOR);
         });
     }
@@ -204,13 +231,13 @@ export class SelectionController {
         // 创建8个控制点
         const positions = [
             { x: 0, y: 0 }, // 左上
-            // { x: 0.5, y: 0 }, // 上中
+            { x: 0.5, y: 0 }, // 上中
             { x: 1, y: 0 }, // 右上
-            // { x: 1, y: 0.5 }, // 右中
+            { x: 1, y: 0.5 }, // 右中
             { x: 1, y: 1 }, // 右下
-            // { x: 0.5, y: 1 }, // 下中
+            { x: 0.5, y: 1 }, // 下中
             { x: 0, y: 1 }, // 左下
-            // { x: 0, y: 0.5 }, // 左中
+            { x: 0, y: 0.5 }, // 左中
         ];
 
         positions.forEach((pos, index) => {
