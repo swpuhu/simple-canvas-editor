@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Point, Text } from 'pixi.js';
 
 export interface RulerOptions {
     width: number;
@@ -7,6 +7,7 @@ export interface RulerOptions {
     majorUnit: number; // 每个大刻度包含几个小刻度
     color: number; // 标尺颜色
     thickness: number; // 标尺厚度
+    measureContainer?: Container; // 测量容器
 }
 
 export class Ruler extends Container {
@@ -33,6 +34,7 @@ export class Ruler extends Container {
         this.verticalRuler = new Container();
         this.graphics = new Graphics();
 
+        this.addChild(this.graphics);
         this.addChild(this.horizontalRuler);
         this.addChild(this.verticalRuler);
 
@@ -43,34 +45,33 @@ export class Ruler extends Container {
         this.graphics.clear();
 
         // 绘制水平标尺背景
-        this.graphics.beginFill(0xffffff);
-        this.graphics.drawRect(
+        this.graphics.rect(
             this.options.thickness,
             0,
-            this.options.width,
+            this.options.width - this.options.thickness,
             this.options.thickness
         );
-        this.graphics.endFill();
 
         // 绘制垂直标尺背景
-        this.graphics.beginFill(0xffffff);
-        this.graphics.drawRect(
+        this.graphics.rect(
             0,
             this.options.thickness,
             this.options.thickness,
-            this.options.height
+            this.options.height - this.options.thickness
         );
-        this.graphics.endFill();
 
         // 绘制左上角方块
-        this.graphics.beginFill(0xffffff);
-        this.graphics.drawRect(
-            0,
-            0,
-            this.options.thickness,
-            this.options.thickness
-        );
-        this.graphics.endFill();
+        // this.graphics.rect(
+        //     0,
+        //     0,
+        //     this.options.thickness,
+        //     this.options.thickness
+        // );
+        this.graphics.stroke({
+            color: this.options.color,
+            width: 1,
+            alignment: 1,
+        });
 
         // 绘制水平刻度
         this.drawHorizontalMarks();
@@ -86,14 +87,21 @@ export class Ruler extends Container {
             const isMajor = (x / unit) % majorUnit === 0;
             const markHeight = isMajor ? thickness / 2 : thickness / 3;
 
-            this.graphics.lineStyle(1, color);
             this.graphics.moveTo(x + thickness, thickness);
             this.graphics.lineTo(x + thickness, thickness - markHeight);
+            let xNumber = x;
+            if (this.options.measureContainer) {
+                const p = new Point(x, 0);
+                const worldP = this.graphics.toGlobal(p);
+                const pInMeasureContainer =
+                    this.options.measureContainer.toLocal(worldP);
+                xNumber = pInMeasureContainer.x;
+            }
 
             // 在大刻度处添加数字
             if (isMajor) {
                 const text = new Text({
-                    text: x.toString(),
+                    text: xNumber.toString(),
                     style: {
                         fontSize: 10,
                         fill: color,
@@ -103,6 +111,10 @@ export class Ruler extends Container {
                 this.horizontalRuler.addChild(text);
             }
         }
+        this.graphics.stroke({
+            color: color,
+            width: 1,
+        });
     }
 
     private drawVerticalMarks() {
@@ -112,14 +124,21 @@ export class Ruler extends Container {
             const isMajor = (y / unit) % majorUnit === 0;
             const markWidth = isMajor ? thickness / 2 : thickness / 3;
 
-            this.graphics.lineStyle(1, color);
             this.graphics.moveTo(thickness, y + thickness);
             this.graphics.lineTo(thickness - markWidth, y + thickness);
 
-            // 在大刻度处添加数字
+            let yNumber = y;
+            if (this.options.measureContainer) {
+                const p = new Point(0, y);
+                const worldP = this.graphics.toGlobal(p);
+                const pInMeasureContainer =
+                    this.options.measureContainer.toLocal(worldP);
+                yNumber = pInMeasureContainer.y;
+            }
+
             if (isMajor) {
                 const text = new Text({
-                    text: y.toString(),
+                    text: yNumber.toString(),
                     style: {
                         fontSize: 10,
                         fill: color,
@@ -129,6 +148,10 @@ export class Ruler extends Container {
                 this.verticalRuler.addChild(text);
             }
         }
+        this.graphics.stroke({
+            color: color,
+            width: 1,
+        });
     }
 
     // 更新标尺尺寸
