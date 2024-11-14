@@ -1,5 +1,5 @@
 import SparkMD5 from 'spark-md5';
-
+import fileStorage from './FileStorage';
 export interface FileDropOptions {
     accept?: string[]; // 接受的文件类型
     multiple?: boolean; // 是否允许多文件
@@ -124,13 +124,18 @@ export class FileDrop {
                 const hash = new SparkMD5.ArrayBuffer()
                     .append(reader.result as ArrayBuffer)
                     .end();
+
+                fileStorage
+                    .saveFile(hash, reader.result as ArrayBuffer)
+                    .then(() => {
+                        console.log('文件保存成功', hash);
+                    });
                 resolve(hash);
             };
 
             reader.onerror = () => {
                 reject(new Error(`文件读取失败: ${file.name}`));
             };
-
             reader.readAsArrayBuffer(file);
         });
     }

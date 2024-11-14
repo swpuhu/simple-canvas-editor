@@ -101,7 +101,7 @@ export class Ruler extends Container {
             // 在大刻度处添加数字
             if (isMajor) {
                 const text = new Text({
-                    text: xNumber.toString(),
+                    text: xNumber.toFixed(0),
                     style: {
                         fontSize: 10,
                         fill: color,
@@ -138,7 +138,7 @@ export class Ruler extends Container {
 
             if (isMajor) {
                 const text = new Text({
-                    text: yNumber.toString(),
+                    text: yNumber.toFixed(0),
                     style: {
                         fontSize: 10,
                         fill: color,

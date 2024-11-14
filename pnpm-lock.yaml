@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@pixi/ui': ^2.1.5
   '@types/spark-md5': ^3.0.5
   core-decorators: ^0.20.0
   pixi.js: ^8.5.2
@@ -9,6 +10,7 @@ specifiers:
   vite: ^5.4.9
 
 dependencies:
+  '@pixi/ui': 2.1.5_pixi.js@8.5.2
   '@types/spark-md5': 3.0.5
   core-decorators: 0.20.0
   pixi.js: 8.5.2
@@ -229,6 +231,16 @@ packages:
 
   /@pixi/colord/2.9.6:
     resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
+    dev: false
+
+  /@pixi/ui/2.1.5_pixi.js@8.5.2:
+    resolution: {integrity: sha512-hdraQYreymjYjWiUu/L4uQIl6VaPcREyvjB64mZpTB44SQ0WmcpiZtw4HyGvM48JRMlkQb12CiFyvxFKI8uC1Q==}
+    peerDependencies:
+      pixi.js: ^8.0.2
+    dependencies:
+      pixi.js: 8.5.2
+      tweedle.js: 2.1.0
+      typed-signals: 2.5.0
     dev: false
 
   /@rollup/rollup-android-arm-eabi/4.25.0:
@@ -536,6 +548,14 @@ packages:
 
   /spark-md5/3.0.2:
     resolution: {integrity: sha1-eVLEoweENHq87nMmjkc7nAFn4/w=}
+    dev: false
+
+  /tweedle.js/2.1.0:
+    resolution: {integrity: sha512-0ReQgVjepoZkE6t0upWNgCRbplHkQJQYk1LStXugwSR728GLFmGDRuaQJlxeC/iBlxud6+P1RdODjaO25vHAqw==}
+    dev: false
+
+  /typed-signals/2.5.0:
+    resolution: {integrity: sha512-m9lHc3eBCJerXYdx+G0uWZihyUXdqTzzgOdqiDDsoUo75WjhFJH6vP5/6w/xhyu04zoxHUqgYhf9FEt85dk/Ng==}
     dev: false
 
   /typescript/5.6.3:

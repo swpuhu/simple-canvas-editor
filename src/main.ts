@@ -1,19 +1,16 @@
 import './style.css';
-import { Application, Container, Graphics, ViewContainer } from 'pixi.js';
-import { EditableText } from './EditableText';
+import { Application, Container, Graphics, Text } from 'pixi.js';
 import { Ruler } from './Ruler';
 import { FileDrop } from './FileDrop';
 import { SpriteLoader } from './SpriteLoader';
 import { SelectionController } from './SelectionController';
-import { TransformPanel } from './TransformPanel';
 
-// 创建Pixi应用
-async function initApp() {
+async function initScene(width: number, height: number): Promise<Container> {
     const app = new Application();
 
     await app.init({
-        width: 800,
-        height: 600,
+        width: width,
+        height: height,
         backgroundColor: 0xffffff,
     });
 
@@ -24,31 +21,63 @@ async function initApp() {
 
     const RULER_THICKNESS = 30;
 
-    const mainZone = new Container();
+    const mainZone = new Graphics();
 
-    const width = app.screen.width - RULER_THICKNESS;
-    const height = app.screen.height - RULER_THICKNESS;
+    const remainWidth = app.screen.width - RULER_THICKNESS;
+    const remainHeight = app.screen.height - RULER_THICKNESS;
 
-    console.log('mainZone', width, height);
-    const centerX = RULER_THICKNESS + width / 2;
-    const centerY = RULER_THICKNESS + height / 2;
+    console.log('mainZone', remainWidth, remainHeight);
+    const centerX = RULER_THICKNESS + remainWidth / 2;
+    const centerY = RULER_THICKNESS + remainHeight / 2;
     mainZone.x = centerX;
     mainZone.y = centerY;
-    mainZone.setSize(width, height);
+    mainZone.setSize(remainWidth, remainHeight);
 
-    const mainZoneGraphics = new Graphics();
-    mainZone.addChild(mainZoneGraphics);
-
-    mainZoneGraphics.rect(-width / 2, -height / 2, width, height);
-    mainZoneGraphics.circle(0, 0, 3);
-    mainZoneGraphics.stroke({ color: 0x000000, width: 3, alignment: 1 });
+    mainZone.rect(
+        -remainWidth / 2,
+        -remainHeight / 2,
+        remainWidth,
+        remainHeight
+    );
+    mainZone.circle(0, 0, 3);
+    mainZone.fill({ color: 0xcccccc, alpha: 0.5 });
     app.stage.addChild(mainZone);
 
+    const canvasZone = new Container();
+    const canvasHeight = remainHeight * 0.8;
+    const canvasWidth = canvasHeight * 0.6;
+
+    const canvasBackground = new Graphics();
+    canvasBackground.setSize(canvasWidth, canvasHeight);
+    canvasBackground.rect(
+        -canvasWidth / 2,
+        -canvasHeight / 2,
+        canvasWidth,
+        canvasHeight
+    );
+    canvasBackground.fill({ color: 0xffffff });
+    canvasBackground.stroke({ color: 0xfb6, width: 2 });
+
+    const canvasMask = new Graphics();
+    canvasMask.rect(
+        -canvasWidth / 2,
+        -canvasHeight / 2,
+        canvasWidth,
+        canvasHeight
+    );
+    canvasMask.fill({ color: 0xffffff });
+
+    canvasZone.addChild(canvasBackground);
+    canvasZone.mask = canvasMask;
+    canvasZone.addChild(canvasMask);
+
+    mainZone.addChild(canvasZone);
+
     const ruler = new Ruler({
-        width: width,
-        height: height,
+        width: remainWidth,
+        height: remainHeight,
         thickness: RULER_THICKNESS,
-        measureContainer: mainZone,
+        measureContainer: canvasZone,
     });
 
     app.stage.addChild(ruler);
@@ -63,46 +92,26 @@ async function initApp() {
         onDrop: async (urlAndHashes: string[][], event: DragEvent) => {
             console.log(urlAndHashes);
             try {
-                // 获取画布相对于视口的位置
                 const canvasBounds = app.canvas.getBoundingClientRect();
-
-                // 计算鼠标相对于画布的位置
                 const x = event.clientX - canvasBounds.left;
                 const y = event.clientY - canvasBounds.top;
 
-                const posInMainZone = mainZone.toLocal({ x, y });
+                const posInCanvasZone = canvasZone.toLocal({ x, y }, app.stage);
 
-                // 将拖入的图片转换为Sprite
-                const sprites = await spriteLoader.loadMultipleSprites(
+                await spriteLoader.loadMultipleSprites(
                     urlAndHashes.map(urlAndHash => ({
                         url: urlAndHash[0],
                         hash: urlAndHash[1],
                         options: {
-                            x: posInMainZone.x, // 使用鼠标位置
-                            y: posInMainZone.y, // 使用鼠标位置
-                            anchor: { x: 0.5, y: 0.5 }, // 使用中心点作为锚点
+                            x: posInCanvasZone.x,
+                            y: posInCanvasZone.y,
+                            anchor: { x: 0.5, y: 0.5 },
                             interactive: true,
                             scale: { x: 1, y: 1 },
                         },
-                        parent: mainZone,
+                        parent: canvasZone,
                     }))
                 );
-
-                //@ts-ignore
-                window.sprites = sprites;
-
-                // 为每个Sprite添加交互
-                // sprites.forEach(sprite => {
-                //     // 添加点击处理
-                //     sprite.on('pointerdown', event => {
-                //         // 可以在这里添加选中、删除等操作
-                //         console.log(
-                //             'Sprite clicked at',
-                //             event.global.x,
-                //             event.global.y
-                //         );
-                //     });
-                // });
             } catch (error) {
                 console.error('加载Sprite失败:', error);
             }
@@ -112,8 +121,29 @@ async function initApp() {
         },
     });
 
-    const selectionController = new SelectionController(app);
+    new SelectionController(app);
+
+    return canvasZone;
+}
+
+// 创建Pixi应用
+async function initApp(width: number, height: number) {
+    const canvasZone = await initScene(width, height);
+    const text = new Text({
+        text: 'Hello, World!',
+        style: {
+            fontSize: 20,
+            fill: 0x000000,
+        },
+    });
+
+    text.eventMode = 'static';
+    text.cursor = 'pointer';
+    console.log(text.getSize());
+    canvasZone.addChild(text);
     // const transformPanel = new TransformPanel(app, selectionController);
 }
 
-initApp();
+const screenWidth = window.innerWidth;
+const screenHeight = window.innerHeight;
+initApp(screenWidth, screenHeight);

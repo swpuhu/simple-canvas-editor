@@ -7,6 +7,7 @@ import {
     FederatedPointerEvent,
     PointData,
     Matrix,
+    Text,
 } from 'pixi.js';
 import { changeAnchor, getNodeRectPointsInParent } from './util';
 
@@ -59,6 +60,9 @@ export class SelectionController {
 
         // 如果点击的是精灵
         if (target instanceof Sprite) {
+            this.selectSprite(target);
+        } else if (target instanceof Text) {
+            console.log('text', target);
             this.selectSprite(target);
         } else {
             // 点击空白处取消选择
