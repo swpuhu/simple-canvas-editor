@@ -1,8 +1,10 @@
+import SparkMD5 from 'spark-md5';
+
 export interface FileDropOptions {
     accept?: string[]; // 接受的文件类型
     multiple?: boolean; // 是否允许多文件
     maxSize?: number; // 最大文件大小（字节）
-    onDrop?: (urls: string[], event: DragEvent) => void; // 拖放成功回调
+    onDrop?: (urlAndHashes: string[][], event: DragEvent) => void; // 拖放成功回调
     onError?: (error: string) => void; // 错误回调
 }
 
@@ -99,13 +101,38 @@ export class FileDrop {
         });
 
         // 转换为URL
-        Promise.all(validFiles.map(file => this.fileToUrl(file)))
-            .then(urls => {
-                this.options.onDrop?.(urls, event);
+        Promise.all(
+            validFiles.map(file => {
+                const url = this.fileToUrl(file);
+                const hash = this.fileToMd5(file);
+                return Promise.all([url, hash]);
+            })
+        )
+            .then(fileResults => {
+                this.options.onDrop?.(fileResults, event);
             })
             .catch(error => {
                 this.options.onError?.(error.message);
             });
+    }
+
+    private fileToMd5(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const hash = new SparkMD5.ArrayBuffer()
+                    .append(reader.result as ArrayBuffer)
+                    .end();
+                resolve(hash);
+            };
+
+            reader.onerror = () => {
+                reject(new Error(`文件读取失败: ${file.name}`));
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
     }
 
     private fileToUrl(file: File): Promise<string> {
@@ -119,7 +146,6 @@ export class FileDrop {
             reader.onerror = () => {
                 reject(new Error(`文件读取失败: ${file.name}`));
             };
-
             reader.readAsDataURL(file);
         });
     }

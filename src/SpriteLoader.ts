@@ -27,6 +27,7 @@ export class SpriteLoader {
     public async loadSprite(
         url: string,
         options: SpriteOptions = {},
+        hash?: string,
         parent: Container = this.app.stage
     ): Promise<Sprite> {
         try {
@@ -37,6 +38,10 @@ export class SpriteLoader {
 
             this.applySpriteOptions(sprite, options);
             parent.addChild(sprite);
+
+            sprite.metadata = {
+                hash: hash || '',
+            };
 
             return sprite;
         } catch (error) {
@@ -88,11 +93,17 @@ export class SpriteLoader {
             url: string;
             options?: SpriteOptions;
             parent?: Container;
+            hash?: string;
         }>
     ) {
         const sprites = await Promise.all(
             spriteConfigs.map(config =>
-                this.loadSprite(config.url, config.options, config.parent)
+                this.loadSprite(
+                    config.url,
+                    config.options,
+                    config.hash,
+                    config.parent
+                )
             )
         );
         return sprites;

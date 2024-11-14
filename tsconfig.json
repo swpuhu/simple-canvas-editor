@@ -21,5 +21,5 @@
         "experimentalDecorators": true,
         "strictPropertyInitialization": false
     },
-    "include": ["src"]
+    "include": ["src", "pixi-extensions.d.ts"]
 }

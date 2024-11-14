@@ -57,10 +57,11 @@ async function initApp() {
     const dropZone = document.querySelector('#app') as HTMLElement;
 
     // 初始化文件拖放
-    const fileDrop = new FileDrop(dropZone, {
+    new FileDrop(dropZone, {
         accept: ['image/jpeg', 'image/png', 'image/gif'],
         multiple: true,
-        onDrop: async (urls: string[], event: DragEvent) => {
+        onDrop: async (urlAndHashes: string[][], event: DragEvent) => {
+            console.log(urlAndHashes);
             try {
                 // 获取画布相对于视口的位置
                 const canvasBounds = app.canvas.getBoundingClientRect();
@@ -73,8 +74,9 @@ async function initApp() {
 
                 // 将拖入的图片转换为Sprite
                 const sprites = await spriteLoader.loadMultipleSprites(
-                    urls.map(url => ({
-                        url,
+                    urlAndHashes.map(urlAndHash => ({
+                        url: urlAndHash[0],
+                        hash: urlAndHash[1],
                         options: {
                             x: posInMainZone.x, // 使用鼠标位置
                             y: posInMainZone.y, // 使用鼠标位置
@@ -85,6 +87,8 @@ async function initApp() {
                         parent: mainZone,
                     }))
                 );
+
+                //@ts-ignore
                 window.sprites = sprites;
 
                 // 为每个Sprite添加交互
@@ -109,7 +113,7 @@ async function initApp() {
     });
 
     const selectionController = new SelectionController(app);
-    const transformPanel = new TransformPanel(app, selectionController);
+    // const transformPanel = new TransformPanel(app, selectionController);
 }
 
 initApp();

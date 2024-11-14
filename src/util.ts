@@ -1,4 +1,4 @@
-import { Container, Matrix, Point, PointData, Sprite } from 'pixi.js';
+import { Matrix, PointData, Sprite } from 'pixi.js';
 
 export function changeAnchor(
     sprite: Sprite,
@@ -87,5 +87,3 @@ export function getNodeRectPointsInParent(node: Sprite): PointData[] {
         return matrix.apply(point);
     });
 }
-
-window.changeAnchor = changeAnchor;

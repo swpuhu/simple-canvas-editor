@@ -8,11 +8,7 @@ import {
     PointData,
     Matrix,
 } from 'pixi.js';
-import {
-    changeAnchor,
-    computeMatrixByPos,
-    getNodeRectPointsInParent,
-} from './util';
+import { changeAnchor, getNodeRectPointsInParent } from './util';
 
 const EDGE_COLOR = 0xffbb66;
 const HANDLE_COLOR = 0xffbb66;
@@ -45,8 +41,6 @@ export class SelectionController {
         this.createControlBox();
         this.createTransformHandles();
         this.createRotateHandle();
-
-        window.resizeSprite = this.resizeSprite;
     }
 
     private initializeEvents(): void {
