@@ -5,7 +5,14 @@ import {
     Sprite,
     Point,
     FederatedPointerEvent,
+    PointData,
+    Matrix,
 } from 'pixi.js';
+import {
+    changeAnchor,
+    computeMatrixByPos,
+    getNodeRectPointsInParent,
+} from './util';
 
 const EDGE_COLOR = 0xffbb66;
 const HANDLE_COLOR = 0xffbb66;
@@ -25,10 +32,12 @@ export class SelectionController {
     private rotateHandle: Graphics | null = null;
     private startPosition = new Point();
     private startSize = { width: 0, height: 0 };
-    private resizeStartPoint = new Point();
+    private resizeStartMatrix: Matrix = new Matrix().identity();
+    private resizeStartSpritePoints: PointData[] = [];
     private isRotating = false;
     private startRotation = 0;
     private startAngle = 0;
+    private spriteStartPosition = new Point();
 
     constructor(app: Application) {
         this.app = app;
@@ -36,6 +45,8 @@ export class SelectionController {
         this.createControlBox();
         this.createTransformHandles();
         this.createRotateHandle();
+
+        window.resizeSprite = this.resizeSprite;
     }
 
     private initializeEvents(): void {
@@ -123,17 +134,20 @@ export class SelectionController {
         if (!this.rotateHandle) {
             return;
         }
-        const offsetY = Math.max(sprite.height * 0.2, 20);
+        const offsetY = 20;
         const bottom = sprite.height * (1 - sprite.anchor.y);
         this.rotateHandle.clear();
-        this.rotateHandle.moveTo(0, bottom);
-        this.rotateHandle.lineTo(0, bottom + offsetY);
+        const left = -sprite.width * sprite.anchor.x;
+        const right = sprite.width * (1 - sprite.anchor.x);
+        const mid = (left + right) / 2;
+        this.rotateHandle.moveTo(mid, bottom);
+        this.rotateHandle.lineTo(mid, bottom + offsetY);
         this.rotateHandle.stroke({
             width: 2,
             color: ROTATE_HANDLE_COLOR,
         });
 
-        this.rotateHandle.circle(0, bottom + offsetY, 5);
+        this.rotateHandle.circle(mid, bottom + offsetY, 5);
         this.rotateHandle.fill(ROTATE_HANDLE_COLOR);
     }
 
@@ -159,23 +173,24 @@ export class SelectionController {
             x: width * (1 - sprite.anchor.x),
             y: height * (1 - sprite.anchor.y),
         };
-
+        const midX = (leftTop.x + rightTop.x) / 2;
+        const midY = (leftTop.y + leftBottom.y) / 2;
         const topMid = {
-            x: 0,
+            x: midX,
             y: leftTop.y,
         };
         const bottomMid = {
-            x: 0,
+            x: midX,
             y: leftBottom.y,
         };
 
         const leftMid = {
             x: leftTop.x,
-            y: 0,
+            y: midY,
         };
         const rightMid = {
             x: rightTop.x,
-            y: 0,
+            y: midY,
         };
         // { x: 0, y: 0 }, // 左上
         // { x: 0.5, y: 0 }, // 上中
@@ -300,20 +315,126 @@ export class SelectionController {
         this.app.stage.on('pointerup', this.onPointerUp);
     }
 
+    @autobind
+    private resizeSprite(
+        handleIndex: number,
+        deltaX: number,
+        deltaY: number
+    ): void {
+        if (deltaX < 100) {
+            // return;
+        }
+        if (!this.selectedSprite) return;
+
+        // 获取精灵的全局变换信息
+        const sprite = this.selectedSprite;
+        const angle = sprite.angle * (Math.PI / 180); // 转换为弧度
+
+        // 将鼠标移动的距离转换到精灵的本地坐标系
+        const cos = Math.cos(-angle);
+        const sin = Math.sin(-angle);
+        let localDeltaX = deltaX * cos - deltaY * sin;
+        let localDeltaY = deltaX * sin + deltaY * cos;
+
+        console.log('localDeltaX', localDeltaX, 'localDeltaY', localDeltaY);
+
+        switch (handleIndex) {
+            case 0: // 左上
+                localDeltaX = -localDeltaX;
+                localDeltaY = -localDeltaY;
+                break;
+            case 2: // 右上
+                localDeltaY = -localDeltaY;
+                break;
+            case 4: // 右下
+                break;
+            case 6: // 左下
+                localDeltaX = -localDeltaX;
+
+                break;
+            case 1: // 上中
+                localDeltaX = 0;
+                localDeltaY = -localDeltaY;
+                break;
+            case 3: // 右中
+                localDeltaY = 0;
+                break;
+            case 5: // 下中
+                localDeltaX = 0;
+                break;
+            case 7: // 左中
+                localDeltaY = 0;
+                localDeltaX = -localDeltaX;
+                break;
+        }
+        this.selectedSprite.width = localDeltaX + this.startSize.width;
+        this.selectedSprite.height = localDeltaY + this.startSize.height;
+
+        // 确保尺寸不会太小
+
+        // 更新精灵位置和大小
+
+        // 更新控制框
+        this.updateControlBoxSizeAndPos(sprite);
+    }
+
+    @autobind
     private onHandleDragStart(
         event: FederatedPointerEvent,
         handleIndex: number
     ): void {
         event.stopPropagation();
+
+        if (!this.selectedSprite) return;
+
         this.isResizing = true;
         this.activeHandle = this.handles[handleIndex];
-        this.resizeStartPoint.copyFrom(event.global);
-        if (this.selectedSprite) {
-            this.startSize = {
-                width: this.selectedSprite.width,
-                height: this.selectedSprite.height,
-            };
+        this.resizeStartSpritePoints = getNodeRectPointsInParent(
+            this.selectedSprite
+        );
+
+        this.resizeStartMatrix = this.selectedSprite.localTransform.clone();
+        this.spriteStartPosition = this.selectedSprite.position.clone();
+        this.dragStartPosition = event.global.clone();
+        let anchorData: PointData = {
+            x: 0.5,
+            y: 0.5,
+        };
+        switch (handleIndex) {
+            case 0: // 左上
+                anchorData.x = 1;
+                anchorData.y = 1;
+                break;
+            case 2: // 右上
+                anchorData.x = 0;
+                anchorData.y = 1;
+                break;
+            case 4: // 右下
+                anchorData.x = 0;
+                anchorData.y = 0;
+                break;
+            case 6: // 左下
+                anchorData.x = 1;
+                anchorData.y = 0;
+                break;
+            case 1: // 上中
+                anchorData.y = 1;
+                break;
+            case 3: // 右中
+                anchorData.x = 0;
+                break;
+            case 5: // 下中
+                anchorData.y = 0;
+                break;
+            case 7: // 左中
+                anchorData.x = 1;
+                break;
         }
+
+        changeAnchor(this.selectedSprite, anchorData);
+
+        // 保存初始状态
+        this.startSize = this.selectedSprite.getSize();
         this.app.stage.on('pointermove', this.onPointerMove);
         this.app.stage.on('pointerup', this.onPointerUp);
     }
@@ -332,8 +453,8 @@ export class SelectionController {
             this.updateControlBoxPos(this.selectedSprite);
         } else if (this.isResizing && this.activeHandle) {
             const newPosition = event.global;
-            const deltaX = newPosition.x - this.resizeStartPoint.x;
-            const deltaY = newPosition.y - this.resizeStartPoint.y;
+            const deltaX = newPosition.x - this.dragStartPosition.x;
+            const deltaY = newPosition.y - this.dragStartPosition.y;
 
             const handleIndex = this.handles.indexOf(this.activeHandle);
             this.resizeSprite(handleIndex, deltaX, deltaY);
@@ -361,57 +482,16 @@ export class SelectionController {
         }
     }
 
-    private resizeSprite(
-        handleIndex: number,
-        deltaX: number,
-        deltaY: number
-    ): void {
-        if (!this.selectedSprite) return;
-
-        let newWidth = this.startSize.width;
-        let newHeight = this.startSize.height;
-
-        switch (handleIndex) {
-            case 0: // 左上
-                newWidth = this.startSize.width - deltaX;
-                newHeight = this.startSize.height - deltaY;
-                break;
-            case 2: // 右上
-                newWidth = this.startSize.width + deltaX;
-                newHeight = this.startSize.height - deltaY;
-                break;
-            case 4: // 右下
-                newWidth = this.startSize.width + deltaX;
-                newHeight = this.startSize.height + deltaY;
-                break;
-            case 6: // 左下
-                newWidth = this.startSize.width - deltaX;
-                newHeight = this.startSize.height + deltaY;
-                break;
-            case 1: // 上中
-                newHeight = this.startSize.height - deltaY;
-                break;
-            case 3: // 右中
-                newWidth = this.startSize.width + deltaX;
-                break;
-            case 5: // 下中
-                newHeight = this.startSize.height + deltaY;
-                break;
-            case 7: // 左中
-                newWidth = this.startSize.width - deltaX;
-                break;
-        }
-
-        // 确保尺寸不会太小
-        newWidth = Math.max(20, newWidth);
-        newHeight = Math.max(20, newHeight);
-
-        this.resizeSelectedSprite(newWidth, newHeight);
-    }
-
     @autobind
     private onPointerUp(): void {
+        if (!this.selectedSprite) return;
         this.isDraggingSprite = false;
+        if (this.isResizing) {
+            changeAnchor(this.selectedSprite, {
+                x: 0.5,
+                y: 0.5,
+            });
+        }
         this.isResizing = false;
         this.isRotating = false;
         this.activeHandle = null;

@@ -1,11 +1,4 @@
-import {
-    Application,
-    Sprite,
-    Texture,
-    AssetInitOptions,
-    Assets,
-    Container,
-} from 'pixi.js';
+import { Application, Sprite, Assets, Container } from 'pixi.js';
 
 export interface SpriteOptions {
     x?: number;

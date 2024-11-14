@@ -48,7 +48,7 @@ export class Ruler extends Container {
         this.graphics.rect(
             this.options.thickness,
             0,
-            this.options.width - this.options.thickness,
+            this.options.width,
             this.options.thickness
         );
 
@@ -57,7 +57,7 @@ export class Ruler extends Container {
             0,
             this.options.thickness,
             this.options.thickness,
-            this.options.height - this.options.thickness
+            this.options.height
         );
 
         // 绘制左上角方块
@@ -83,12 +83,12 @@ export class Ruler extends Container {
     private drawHorizontalMarks() {
         const { unit, majorUnit, thickness, width, color } = this.options;
 
-        for (let x = 0; x <= width; x += unit) {
+        for (let x = thickness; x <= width; x += unit) {
             const isMajor = (x / unit) % majorUnit === 0;
             const markHeight = isMajor ? thickness / 2 : thickness / 3;
 
-            this.graphics.moveTo(x + thickness, thickness);
-            this.graphics.lineTo(x + thickness, thickness - markHeight);
+            this.graphics.moveTo(x, thickness);
+            this.graphics.lineTo(x, thickness - markHeight);
             let xNumber = x;
             if (this.options.measureContainer) {
                 const p = new Point(x, 0);
@@ -107,7 +107,7 @@ export class Ruler extends Container {
                         fill: color,
                     },
                 });
-                text.position.set(x + thickness - text.width / 2, 2);
+                text.position.set(x - text.width / 2, 2);
                 this.horizontalRuler.addChild(text);
             }
         }
@@ -120,12 +120,12 @@ export class Ruler extends Container {
     private drawVerticalMarks() {
         const { unit, majorUnit, thickness, height, color } = this.options;
 
-        for (let y = 0; y <= height; y += unit) {
+        for (let y = thickness; y <= height; y += unit) {
             const isMajor = (y / unit) % majorUnit === 0;
             const markWidth = isMajor ? thickness / 2 : thickness / 3;
 
-            this.graphics.moveTo(thickness, y + thickness);
-            this.graphics.lineTo(thickness - markWidth, y + thickness);
+            this.graphics.moveTo(thickness, y);
+            this.graphics.lineTo(thickness - markWidth, y);
 
             let yNumber = y;
             if (this.options.measureContainer) {
@@ -144,7 +144,7 @@ export class Ruler extends Container {
                         fill: color,
                     },
                 });
-                text.position.set(2, y + thickness - text.height / 2);
+                text.position.set(2, y - text.height / 2);
                 this.verticalRuler.addChild(text);
             }
         }

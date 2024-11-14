@@ -1,5 +1,5 @@
 import './style.css';
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Graphics, ViewContainer } from 'pixi.js';
 import { EditableText } from './EditableText';
 import { Ruler } from './Ruler';
 import { FileDrop } from './FileDrop';
@@ -22,21 +22,36 @@ async function initApp() {
     // 创建SpriteLoader实例
     const spriteLoader = new SpriteLoader(app);
 
-    const RULER_THICKNESS = 20;
+    const RULER_THICKNESS = 30;
+
+    const mainZone = new Container();
+
+    const width = app.screen.width - RULER_THICKNESS;
+    const height = app.screen.height - RULER_THICKNESS;
+
+    console.log('mainZone', width, height);
+    const centerX = RULER_THICKNESS + width / 2;
+    const centerY = RULER_THICKNESS + height / 2;
+    mainZone.x = centerX;
+    mainZone.y = centerY;
+    mainZone.setSize(width, height);
+
+    const mainZoneGraphics = new Graphics();
+    mainZone.addChild(mainZoneGraphics);
+
+    mainZoneGraphics.rect(-width / 2, -height / 2, width, height);
+    mainZoneGraphics.circle(0, 0, 3);
+    mainZoneGraphics.stroke({ color: 0x000000, width: 3, alignment: 1 });
+    app.stage.addChild(mainZone);
+
     const ruler = new Ruler({
-        width: app.screen.width,
-        height: app.screen.height,
+        width: width,
+        height: height,
         thickness: RULER_THICKNESS,
+        measureContainer: mainZone,
     });
 
     app.stage.addChild(ruler);
-
-    const mainZone = new Container();
-    mainZone.x = RULER_THICKNESS;
-    mainZone.y = RULER_THICKNESS;
-    mainZone.width = app.screen.width - RULER_THICKNESS;
-    mainZone.height = app.screen.height - RULER_THICKNESS;
-    app.stage.addChild(mainZone);
 
     // 创建拖放区域
     const dropZone = document.querySelector('#app') as HTMLElement;
@@ -54,13 +69,15 @@ async function initApp() {
                 const x = event.clientX - canvasBounds.left;
                 const y = event.clientY - canvasBounds.top;
 
+                const posInMainZone = mainZone.toLocal({ x, y });
+
                 // 将拖入的图片转换为Sprite
                 const sprites = await spriteLoader.loadMultipleSprites(
                     urls.map(url => ({
                         url,
                         options: {
-                            x, // 使用鼠标位置
-                            y, // 使用鼠标位置
+                            x: posInMainZone.x, // 使用鼠标位置
+                            y: posInMainZone.y, // 使用鼠标位置
                             anchor: { x: 0.5, y: 0.5 }, // 使用中心点作为锚点
                             interactive: true,
                             scale: { x: 1, y: 1 },
