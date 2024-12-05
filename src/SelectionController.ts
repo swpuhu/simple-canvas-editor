@@ -7,6 +7,7 @@ import {
     FederatedPointerEvent,
     PointData,
     Text,
+    Container,
 } from 'pixi.js';
 import { changeAnchor } from './util';
 
@@ -30,9 +31,11 @@ export class SelectionController {
     private isRotating = false;
     private startRotation = 0;
     private startAngle = 0;
+    private container: Container | null = null;
 
-    constructor(app: Application) {
+    constructor(app: Application, container: Container) {
         this.app = app;
+        this.container = container;
         this.initializeEvents();
         this.createControlBox();
         this.createTransformHandles();
@@ -221,7 +224,7 @@ export class SelectionController {
 
     private createControlBox(): void {
         this.controlBox = new Graphics();
-        this.app.stage.addChild(this.controlBox);
+        this.container?.addChild(this.controlBox);
     }
 
     private createRotateHandle(): void {

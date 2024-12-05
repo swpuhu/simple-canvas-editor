@@ -15,6 +15,7 @@ export class Ruler extends Container {
     private horizontalRuler: Container;
     private verticalRuler: Container;
     private graphics: Graphics;
+    private currentZoom: number = 1; // 新增：当前缩放值
 
     constructor(options: Partial<RulerOptions> = {}) {
         super();
@@ -84,7 +85,7 @@ export class Ruler extends Container {
         const { unit, majorUnit, thickness, width, color } = this.options;
 
         for (let x = thickness; x <= width; x += unit) {
-            const isMajor = (x / unit) % majorUnit === 0;
+            const isMajor = Math.round(x / unit) % majorUnit === 0;
             const markHeight = isMajor ? thickness / 2 : thickness / 3;
 
             this.graphics.moveTo(x, thickness);
@@ -101,7 +102,7 @@ export class Ruler extends Container {
             // 在大刻度处添加数字
             if (isMajor) {
                 const text = new Text({
-                    text: xNumber.toFixed(0),
+                    text: Math.round(xNumber).toString(),
                     style: {
                         fontSize: 10,
                         fill: color,
@@ -121,7 +122,7 @@ export class Ruler extends Container {
         const { unit, majorUnit, thickness, height, color } = this.options;
 
         for (let y = thickness; y <= height; y += unit) {
-            const isMajor = (y / unit) % majorUnit === 0;
+            const isMajor = Math.round(y / unit) % majorUnit === 0;
             const markWidth = isMajor ? thickness / 2 : thickness / 3;
 
             this.graphics.moveTo(thickness, y);
@@ -138,7 +139,7 @@ export class Ruler extends Container {
 
             if (isMajor) {
                 const text = new Text({
-                    text: yNumber.toFixed(0),
+                    text: Math.round(yNumber).toString(),
                     style: {
                         fontSize: 10,
                         fill: color,
@@ -172,5 +173,24 @@ export class Ruler extends Container {
         this.horizontalRuler.removeChildren();
         this.verticalRuler.removeChildren();
         this.draw();
+    }
+
+    // 新增：设置缩放的方法
+    public setZoom(zoom: number) {
+        this.currentZoom = zoom;
+        // 根据缩放调整单位
+        const baseUnit = 10; // 基础单位为10像素
+        const adjustedUnit = baseUnit * (1 / zoom);
+
+        // 调整主要刻度的间隔
+        let majorUnit = 5;
+        if (zoom < 0.5) {
+            majorUnit = 10;
+        } else if (zoom > 2) {
+            majorUnit = 2;
+        }
+
+        // 更新标尺
+        this.setUnit(adjustedUnit, majorUnit);
     }
 }

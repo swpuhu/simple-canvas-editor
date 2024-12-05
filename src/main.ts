@@ -4,6 +4,7 @@ import { Ruler } from './Ruler';
 import { FileDrop } from './FileDrop';
 import { SpriteLoader } from './SpriteLoader';
 import { SelectionController } from './SelectionController';
+import { ZoomController } from './ZoomController';
 
 async function initScene(width: number, height: number): Promise<Container> {
     const app = new Application();
@@ -72,12 +73,18 @@ async function initScene(width: number, height: number): Promise<Container> {
     canvasZone.addChild(canvasMask);
 
     mainZone.addChild(canvasZone);
+    console.log('canvasZone', canvasZone.width, canvasZone.height);
 
     const ruler = new Ruler({
         width: remainWidth,
         height: remainHeight,
         thickness: RULER_THICKNESS,
         measureContainer: canvasZone,
+    });
+
+    const zoomController = new ZoomController(app, canvasZone, zoom => {
+        // 这里可以处理缩放变化，例如更新标尺
+        ruler.setZoom(zoom);
     });
 
     app.stage.addChild(ruler);
@@ -121,7 +128,7 @@ async function initScene(width: number, height: number): Promise<Container> {
         },
     });
 
-    new SelectionController(app);
+    new SelectionController(app, canvasZone);
 
     return canvasZone;
 }
@@ -139,7 +146,6 @@ async function initApp(width: number, height: number) {
 
     text.eventMode = 'static';
     text.cursor = 'pointer';
-    console.log(text.getSize());
     canvasZone.addChild(text);
     // const transformPanel = new TransformPanel(app, selectionController);
 }
