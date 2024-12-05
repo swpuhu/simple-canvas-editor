@@ -1,7 +1,7 @@
-import { Matrix, PointData, Sprite } from 'pixi.js';
+import { Matrix, PointData, Sprite, Text } from 'pixi.js';
 
 export function changeAnchor(
-    sprite: Sprite,
+    sprite: Sprite | Text,
     anchor: { x: number; y: number }
 ): void {
     const currentAnchor = sprite.anchor;
@@ -62,7 +62,7 @@ export function computeMatrixByPos(
     return matrix;
 }
 
-export function getNodeLocalRectPoints(node: Sprite): PointData[] {
+export function getNodeLocalRectPoints(node: Sprite | Text): PointData[] {
     // lt, rt, rb, lb
     return [
         { x: -node.width * node.anchor.x, y: -node.height * node.anchor.y },
@@ -81,7 +81,7 @@ export function getNodeLocalRectPoints(node: Sprite): PointData[] {
     ];
 }
 
-export function getNodeRectPointsInParent(node: Sprite): PointData[] {
+export function getNodeRectPointsInParent(node: Sprite | Text): PointData[] {
     const matrix = node.localTransform;
     return getNodeLocalRectPoints(node).map(point => {
         return matrix.apply(point);

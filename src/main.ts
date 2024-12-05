@@ -132,7 +132,7 @@ async function initApp(width: number, height: number) {
     const text = new Text({
         text: 'Hello, World!',
         style: {
-            fontSize: 20,
+            fontSize: 200,
             fill: 0x000000,
         },
     });
