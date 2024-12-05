@@ -314,9 +314,6 @@ export class SelectionController {
         deltaX: number,
         deltaY: number
     ): void {
-        if (deltaX < 100) {
-            // return;
-        }
         if (!this.selectedTarget) return;
 
         // 获取精灵的全局变换信息
@@ -328,8 +325,6 @@ export class SelectionController {
         const sin = Math.sin(-angle);
         let localDeltaX = deltaX * cos - deltaY * sin;
         let localDeltaY = deltaX * sin + deltaY * cos;
-
-        console.log('localDeltaX', localDeltaX, 'localDeltaY', localDeltaY);
 
         switch (handleIndex) {
             case 0: // 左上
@@ -343,7 +338,6 @@ export class SelectionController {
                 break;
             case 6: // 左下
                 localDeltaX = -localDeltaX;
-
                 break;
             case 1: // 上中
                 localDeltaX = 0;
@@ -360,12 +354,14 @@ export class SelectionController {
                 localDeltaX = -localDeltaX;
                 break;
         }
-        this.selectedTarget.width = localDeltaX + this.startSize.width;
-        this.selectedTarget.height = localDeltaY + this.startSize.height;
 
-        // 确保尺寸不会太小
+        // 计算新的尺寸
+        const newWidth = localDeltaX + this.startSize.width;
+        const newHeight = localDeltaY + this.startSize.height;
 
-        // 更新精灵位置和大小
+        // 应用最小尺寸限制
+        this.selectedTarget.width = Math.max(50, newWidth);
+        this.selectedTarget.height = Math.max(50, newHeight);
 
         // 更新控制框
         this.updateControlBoxSizeAndPos(sprite);
