@@ -31,7 +31,7 @@ export class SelectionController {
     private isRotating = false;
     private startRotation = 0;
     private startAngle = 0;
-    private container: Container | null = null;
+    private container: Container;
 
     constructor(app: Application, container: Container) {
         this.app = app;
@@ -304,7 +304,7 @@ export class SelectionController {
     @autobind
     private onSpriteDragStart(event: FederatedPointerEvent): void {
         this.isDraggingSprite = true;
-        this.startPosition.copyFrom(event.global);
+        this.startPosition = this.container.toLocal(event.global);
         this.originalPosition.x = this.selectedTarget!.x;
         this.originalPosition.y = this.selectedTarget!.y;
         this.app.stage.on('pointermove', this.onPointerMove);
@@ -382,7 +382,8 @@ export class SelectionController {
         this.isResizing = true;
         this.activeHandle = this.handles[handleIndex];
 
-        this.dragStartPosition = event.global.clone();
+        this.dragStartPosition = this.container.toLocal(event.global);
+        console.log('dragStartPosition', this.dragStartPosition);
         let anchorData: PointData = {
             x: 0.5,
             y: 0.5,
@@ -430,8 +431,8 @@ export class SelectionController {
     private onPointerMove(event: FederatedPointerEvent): void {
         if (!this.selectedTarget) return;
 
+        const newPosition = this.container.toLocal(event.global);
         if (this.isDraggingSprite) {
-            const newPosition = event.global;
             const deltaX = newPosition.x - this.startPosition.x;
             const deltaY = newPosition.y - this.startPosition.y;
 
@@ -439,19 +440,20 @@ export class SelectionController {
             this.selectedTarget.y = this.originalPosition.y + deltaY;
             this.updateControlBoxPos(this.selectedTarget);
         } else if (this.isResizing && this.activeHandle) {
-            const newPosition = event.global;
             const deltaX = newPosition.x - this.dragStartPosition.x;
             const deltaY = newPosition.y - this.dragStartPosition.y;
 
             const handleIndex = this.handles.indexOf(this.activeHandle);
             this.resizeSprite(handleIndex, deltaX, deltaY);
         } else if (this.isRotating) {
-            const center = this.getSpriteCenterGlobal();
-            const currentPos = event.global;
+            const center = this.selectedTarget.position;
 
             // 计算当前角度
             const currentRotation =
-                (Math.atan2(currentPos.y - center.y, currentPos.x - center.x) *
+                (Math.atan2(
+                    newPosition.y - center.y,
+                    newPosition.x - center.x
+                ) *
                     180) /
                 Math.PI;
 
