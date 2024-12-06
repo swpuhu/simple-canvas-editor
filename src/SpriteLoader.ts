@@ -11,7 +11,7 @@ export interface SpriteOptions {
     interactive?: boolean;
 }
 
-export class SpriteLoader {
+class SpriteLoader {
     constructor() {}
 
     /**
@@ -105,3 +105,5 @@ export class SpriteLoader {
         return sprites;
     }
 }
+
+export const spriteLoader = new SpriteLoader();

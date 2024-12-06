@@ -1,68 +1,63 @@
 import { Application, Container, Graphics, Point, Text } from 'pixi.js';
+import { AbstractPlugin } from './AbstractPlugin';
+import { RULER_THICKNESS } from '../consts';
 
 export interface RulerOptions {
-    width: number;
-    height: number;
     unit: number; // 每个小刻度的单位长度（像素）
     majorUnit: number; // 每个大刻度包含几个小刻度
     color: number; // 标尺颜色
     thickness: number; // 标尺厚度
 }
 
-export class Ruler extends Container {
+export class Ruler extends AbstractPlugin {
     private options: RulerOptions;
-    private horizontalRuler: Container;
-    private verticalRuler: Container;
+    private horizontalTextContainer: Container;
+    private verticalTextContainer: Container;
     private graphics: Graphics;
-    private currentZoom: number = 1; // 新增：当前缩放值
-
-    constructor(
-        private app: Application,
-        private measureContainer: Container,
-        options: Partial<RulerOptions> = {}
-    ) {
-        super();
-
-        // 默认配置
+    private measureContainer: Container;
+    public container: Container;
+    public init(
+        app: Application,
+        layers: { canvasZone: Container; topLayer: Container }
+    ): void {
         this.options = {
-            width: 800,
-            height: 600,
             unit: 10, // 10px为一个小刻度
             majorUnit: 5, // 每5个小刻度显示一个大刻度
             color: 0x333333, // 深灰色
-            thickness: 20, // 标尺厚度
-            ...options,
+            thickness: RULER_THICKNESS, // 标尺厚度
         };
 
-        this.horizontalRuler = new Container();
-        this.verticalRuler = new Container();
+        this.horizontalTextContainer = new Container();
+        this.verticalTextContainer = new Container();
         this.graphics = new Graphics();
+        this.container = new Container();
+        const canvasZone = layers.canvasZone;
+        this.measureContainer = canvasZone;
+        this.container.addChild(this.graphics);
+        this.container.addChild(this.horizontalTextContainer);
+        this.container.addChild(this.verticalTextContainer);
 
-        this.addChild(this.graphics);
-        this.addChild(this.horizontalRuler);
-        this.addChild(this.verticalRuler);
+        app.stage.addChild(this.container);
+    }
+    public onLoad(): void {
+        this.draw();
+    }
 
+    public setOptions(options: Partial<RulerOptions>): void {
+        this.options = { ...this.options, ...options };
         this.draw();
     }
 
     private draw() {
         this.graphics.clear();
-
+        const thickness = this.options.thickness;
+        const width = this.app.screen.width - this.options.thickness;
+        const height = this.app.screen.height - this.options.thickness;
         // 绘制水平标尺背景
-        this.graphics.rect(
-            this.options.thickness,
-            0,
-            this.options.width,
-            this.options.thickness
-        );
+        this.graphics.rect(thickness, 0, width, thickness);
 
         // 绘制垂直标尺背景
-        this.graphics.rect(
-            0,
-            this.options.thickness,
-            this.options.thickness,
-            this.options.height
-        );
+        this.graphics.rect(0, thickness, thickness, height);
 
         // 绘制左上角方块
         // this.graphics.rect(
@@ -135,7 +130,7 @@ export class Ruler extends Container {
                 },
             });
             text.position.set(2, yNumber - text.height / 2);
-            this.verticalRuler.addChild(text);
+            this.verticalTextContainer.addChild(text);
         }
         return true;
     }
@@ -166,7 +161,7 @@ export class Ruler extends Container {
                 },
             });
             text.position.set(xNumber - text.height / 2, 2);
-            this.verticalRuler.addChild(text);
+            this.verticalTextContainer.addChild(text);
         }
         return true;
     }
@@ -204,14 +199,13 @@ export class Ruler extends Container {
         if (majorUnit) {
             this.options.majorUnit = majorUnit;
         }
-        this.horizontalRuler.removeChildren();
-        this.verticalRuler.removeChildren();
+        this.horizontalTextContainer.removeChildren();
+        this.verticalTextContainer.removeChildren();
         this.draw();
     }
 
     // 新增：设置缩放的方法
     public setZoom(zoom: number) {
-        this.currentZoom = zoom;
         // 根据缩放调整单位
         const baseUnit = 10; // 基础单位为10像素
         const adjustedUnit = baseUnit * (1 / zoom);

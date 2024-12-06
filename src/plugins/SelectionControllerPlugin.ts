@@ -8,17 +8,19 @@ import {
     PointData,
     Text,
     Container,
+    ContextIds,
 } from 'pixi.js';
 import { changeAnchor } from '../util';
+import { AbstractPlugin } from './AbstractPlugin';
 
 const EDGE_COLOR = 0xffbb66;
 const HANDLE_COLOR = 0xffbb66;
 const ROTATE_HANDLE_COLOR = 0x00ffbb;
 
-export class SelectionController {
-    private app: Application;
+export class SelectionController extends AbstractPlugin {
     private selectedTarget: Sprite | Text | null = null;
-    private controlBox: Graphics | null = null;
+    private controlBox: Container;
+    private controlBoxGraphic: Graphics;
     private handles: Graphics[] = [];
     private dragStartPosition = new Point();
     private originalPosition = new Point();
@@ -33,14 +35,17 @@ export class SelectionController {
     private startAngle = 0;
     private container: Container;
 
-    constructor(app: Application, container: Container) {
-        this.app = app;
-        this.container = container;
+    public init(
+        _app: Application,
+        layers: { canvasZone: Container; topLayer: Container }
+    ): void {
+        this.container = layers.topLayer;
         this.initializeEvents();
         this.createControlBox();
         this.createTransformHandles();
         this.createRotateHandle();
     }
+    public onLoad(): void {}
 
     private initializeEvents(): void {
         // this.app.stage.eventMode = 'dynamic';
@@ -69,9 +74,6 @@ export class SelectionController {
     }
 
     private selectSprite(sprite: Sprite | Text): void {
-        if (!this.controlBox) {
-            return;
-        }
         this.clearSelection();
         this.selectedTarget = sprite;
 
@@ -85,9 +87,6 @@ export class SelectionController {
     }
 
     private updateControlBoxPos(sprite: Sprite | Text): Readonly<Point> {
-        if (!this.controlBox) {
-            return new Point();
-        }
         const spriteWorldPos = sprite.getGlobalPosition();
         const posInControlBox = this.controlBox.parent.toLocal(spriteWorldPos);
         this.controlBox.x = posInControlBox.x;
@@ -100,16 +99,16 @@ export class SelectionController {
         if (!this.controlBox) {
             return;
         }
-        this.controlBox.clear();
+        this.controlBoxGraphic.clear();
         const width = sprite.width;
         const height = sprite.height;
-        this.controlBox.rect(
+        this.controlBoxGraphic.rect(
             -width * sprite.anchor.x,
             -height * sprite.anchor.y,
             width,
             height
         );
-        this.controlBox.stroke({
+        this.controlBoxGraphic.stroke({
             width: 2,
             color: EDGE_COLOR,
             alignment: 0.5,
@@ -223,8 +222,10 @@ export class SelectionController {
     }
 
     private createControlBox(): void {
-        this.controlBox = new Graphics();
-        this.container?.addChild(this.controlBox);
+        this.controlBox = new Container();
+        this.controlBoxGraphic = new Graphics();
+        this.controlBox.addChild(this.controlBoxGraphic);
+        this.container.addChild(this.controlBox);
     }
 
     private createRotateHandle(): void {
@@ -275,8 +276,8 @@ export class SelectionController {
         this.isRotating = true;
 
         // 计算初始角度
-        const center = this.getSpriteCenterGlobal();
-        const startPos = event.global;
+        const center = this.selectedTarget.position;
+        const startPos = this.container.toLocal(event.global);
         this.startRotation =
             (Math.atan2(startPos.y - center.y, startPos.x - center.x) * 180) /
             Math.PI;

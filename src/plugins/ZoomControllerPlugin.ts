@@ -1,26 +1,28 @@
 import { Application, Container } from 'pixi.js';
+import { AbstractPlugin } from './AbstractPlugin';
 
-export class ZoomController {
-    private app: Application;
+export class ZoomControllerPlugin extends AbstractPlugin {
     private containers: Container[];
     private minZoom = 0.1;
     private maxZoom = 5;
     private currentZoom = 1;
     private onZoomChange?: (zoom: number) => void;
 
-    constructor(
-        app: Application,
-        containers: Container[],
-        onZoomChange?: (zoom: number) => void
-    ) {
-        this.app = app;
-        this.containers = containers;
-        this.onZoomChange = onZoomChange;
+    public init(
+        _app: Application,
+        layers: { canvasZone: Container; topLayer: Container }
+    ): void {
+        this.containers = [layers.canvasZone, layers.topLayer];
         this.initializeEvents();
+    }
+    public onLoad(): void {}
+
+    public setOnZoomChange(onZoomChange: (zoom: number) => void): void {
+        this.onZoomChange = onZoomChange;
     }
 
     private initializeEvents(): void {
-        this.app.view.addEventListener('wheel', this.handleWheel);
+        this.app.canvas.addEventListener('wheel', this.handleWheel);
     }
 
     private zoomContainer(event: WheelEvent, container: Container) {
@@ -33,7 +35,7 @@ export class ZoomController {
 
         if (newZoom !== this.currentZoom) {
             // 获取鼠标在容器中的位置
-            const bounds = this.app.view.getBoundingClientRect();
+            const bounds = this.app.canvas.getBoundingClientRect();
             const mouseX = event.clientX - bounds.left;
             const mouseY = event.clientY - bounds.top;
 
@@ -91,6 +93,6 @@ export class ZoomController {
     }
 
     public destroy(): void {
-        this.app.view.removeEventListener('wheel', this.handleWheel);
+        this.app.canvas.removeEventListener('wheel', this.handleWheel);
     }
 }
