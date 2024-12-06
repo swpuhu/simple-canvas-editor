@@ -75,7 +75,7 @@ export class Scene {
 
         const topLayer = new Container();
         topLayer.position.set(canvasZone.x, canvasZone.y);
-        app.stage.addChild(topLayer);
+        mainZone.addChild(topLayer);
 
         console.log('canvasZone', canvasZone.width, canvasZone.height);
 

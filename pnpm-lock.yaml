@@ -4,16 +4,16 @@ specifiers:
   '@pixi/ui': ^2.1.5
   '@types/spark-md5': ^3.0.5
   core-decorators: ^0.20.0
-  pixi.js: ^8.5.2
+  pixi.js: 8.6.3
   spark-md5: ^3.0.2
   typescript: ~5.6.3
   vite: ^5.4.9
 
 dependencies:
-  '@pixi/ui': 2.1.5_pixi.js@8.5.2
+  '@pixi/ui': 2.1.5_pixi.js@8.6.3
   '@types/spark-md5': 3.0.5
   core-decorators: 0.20.0
-  pixi.js: 8.5.2
+  pixi.js: 8.6.3
   spark-md5: 3.0.2
 
 devDependencies:
@@ -233,12 +233,12 @@ packages:
     resolution: {integrity: sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==}
     dev: false
 
-  /@pixi/ui/2.1.5_pixi.js@8.5.2:
+  /@pixi/ui/2.1.5_pixi.js@8.6.3:
     resolution: {integrity: sha512-hdraQYreymjYjWiUu/L4uQIl6VaPcREyvjB64mZpTB44SQ0WmcpiZtw4HyGvM48JRMlkQb12CiFyvxFKI8uC1Q==}
     peerDependencies:
       pixi.js: ^8.0.2
     dependencies:
-      pixi.js: 8.5.2
+      pixi.js: 8.6.3
       tweedle.js: 2.1.0
       typed-signals: 2.5.0
     dev: false
@@ -473,7 +473,7 @@ packages:
     optional: true
 
   /ismobilejs/1.1.1:
-    resolution: {integrity: sha1-xWygro5Sskyg8iul7zIVot27qg4=}
+    resolution: {integrity: sha512-VaFW53yt8QO61k2WJui0dHf4SlL8lxBofUuUmwBo0ljPk0Drz2TiuDW4jo3wDcv41qy/SxrJ+VAzJ/qYqsmzRw==}
     dev: false
 
   /nanoid/3.3.7:
@@ -483,15 +483,15 @@ packages:
     dev: true
 
   /parse-svg-path/0.1.2:
-    resolution: {integrity: sha1-en7A0esG+lMlx9PgCbhZoJtdSes=}
+    resolution: {integrity: sha512-JyPSBnkTJ0AI8GGJLfMXvKq42cj5c006fnLz6fXy6zfoVjJizi8BNTpu8on8ziI1cKy9d9DGNuY17Ce7wuejpQ==}
     dev: false
 
   /picocolors/1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
     dev: true
 
-  /pixi.js/8.5.2:
-    resolution: {integrity: sha512-TOt9g8ifOj4R9DN9ST1M8t2nvnuhr5oWL5YW9ywFLbnOVgFMDcEz+Xek5Mo8Xr64D+QU3qre3IFgreBlsHxTNw==}
+  /pixi.js/8.6.3:
+    resolution: {integrity: sha512-yQcDd8UYdeUsk6TnzY2PFFtDeRMqQQX+MEUNX7iqshIRLW2BmpT9E4nw/y2MXWMZozQs/FfRNkaBPE6SsO1HBw==}
     dependencies:
       '@pixi/colord': 2.9.6
       '@types/css-font-loading-module': 0.0.12

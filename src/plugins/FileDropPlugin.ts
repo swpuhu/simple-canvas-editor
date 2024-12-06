@@ -1,6 +1,6 @@
 import { Application, Container } from 'pixi.js';
 import { AbstractPlugin } from './AbstractPlugin';
-import { FileDrop } from '../uilts/FileDrop';
+import { FileDrop } from '../utils/FileDrop';
 import { spriteLoader } from '../SpriteLoader';
 
 export class FileDropPlugin extends AbstractPlugin {

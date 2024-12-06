@@ -5,13 +5,12 @@ import {
     Sprite,
     Point,
     FederatedPointerEvent,
-    PointData,
     Text,
     Container,
-    ContextIds,
 } from 'pixi.js';
-import { changeAnchor } from '../util';
+
 import { AbstractPlugin } from './AbstractPlugin';
+import { getAngle, changeAnchor } from '../utils/util';
 
 const EDGE_COLOR = 0xffbb66;
 const HANDLE_COLOR = 0xffbb66;
@@ -28,10 +27,8 @@ export class SelectionController extends AbstractPlugin {
     private isResizing = false;
     private activeHandle: Graphics | null = null;
     private rotateHandle: Graphics | null = null;
-    private startPosition = new Point();
     private startSize = { width: 0, height: 0 };
     private isRotating = false;
-    private startRotation = 0;
     private startAngle = 0;
     private container: Container;
 
@@ -276,13 +273,12 @@ export class SelectionController extends AbstractPlugin {
         this.isRotating = true;
 
         // 计算初始角度
-        const center = this.selectedTarget.position;
-        const startPos = this.container.toLocal(event.global);
-        this.startRotation =
-            (Math.atan2(startPos.y - center.y, startPos.x - center.x) * 180) /
-            Math.PI;
+        this.dragStartPosition = this.container.toLocal(event.global);
         this.startAngle = this.selectedTarget.angle;
-
+        changeAnchor(this.selectedTarget, {
+            x: 0.5,
+            y: 0.5,
+        });
         // 添加事件监听
         this.app.stage.on('pointermove', this.onPointerMove);
         this.app.stage.on('pointerup', this.onPointerUp);
@@ -305,7 +301,7 @@ export class SelectionController extends AbstractPlugin {
     @autobind
     private onSpriteDragStart(event: FederatedPointerEvent): void {
         this.isDraggingSprite = true;
-        this.startPosition = this.container.toLocal(event.global);
+        this.dragStartPosition = this.container.toLocal(event.global);
         this.originalPosition.x = this.selectedTarget!.x;
         this.originalPosition.y = this.selectedTarget!.y;
         this.app.stage.on('pointermove', this.onPointerMove);
@@ -389,8 +385,8 @@ export class SelectionController extends AbstractPlugin {
         this.activeHandle = this.handles[handleIndex];
 
         this.dragStartPosition = this.container.toLocal(event.global);
-        console.log('dragStartPosition', this.dragStartPosition);
-        let anchorData: PointData = {
+        // console.log('dragStartPosition', this.dragStartPosition);
+        let anchorData = {
             x: 0.5,
             y: 0.5,
         };
@@ -439,8 +435,8 @@ export class SelectionController extends AbstractPlugin {
 
         const newPosition = this.container.toLocal(event.global);
         if (this.isDraggingSprite) {
-            const deltaX = newPosition.x - this.startPosition.x;
-            const deltaY = newPosition.y - this.startPosition.y;
+            const deltaX = newPosition.x - this.dragStartPosition.x;
+            const deltaY = newPosition.y - this.dragStartPosition.y;
 
             this.selectedTarget.x = this.originalPosition.x + deltaX;
             this.selectedTarget.y = this.originalPosition.y + deltaY;
@@ -455,16 +451,12 @@ export class SelectionController extends AbstractPlugin {
             const center = this.selectedTarget.position;
 
             // 计算当前角度
-            const currentRotation =
-                (Math.atan2(
-                    newPosition.y - center.y,
-                    newPosition.x - center.x
-                ) *
-                    180) /
-                Math.PI;
+
+            const startVec = this.dragStartPosition.subtract(center);
+            const currentVec = newPosition.subtract(center);
 
             // 计算角度差
-            let deltaRotation = currentRotation - this.startRotation;
+            let deltaRotation = getAngle(startVec, currentVec);
 
             // 设置新的角度
             let newAngle = this.startAngle + deltaRotation;
@@ -536,16 +528,5 @@ export class SelectionController extends AbstractPlugin {
             // this.clearSelection();
             this.selectSprite(this.selectedTarget);
         }
-    }
-
-    // 辅助方法：获取精灵中心点的全局坐标
-    private getSpriteCenterGlobal(): Point {
-        if (!this.selectedTarget) return new Point();
-
-        const bounds = this.selectedTarget.getBounds();
-        return new Point(
-            bounds.x + bounds.width / 2,
-            bounds.y + bounds.height / 2
-        );
     }
 }

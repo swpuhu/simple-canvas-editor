@@ -1,12 +1,12 @@
 import './style.css';
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Container, Text } from 'pixi.js';
 import { Ruler } from './plugins/RulerPlugin';
 import { Scene } from './Scene';
 import { SelectionController } from './plugins/SelectionControllerPlugin';
 import { PluginManager } from './PluginManager';
 import { FileDropPlugin } from './plugins/FileDropPlugin';
 import { ZoomControllerPlugin } from './plugins/ZoomControllerPlugin';
-import { RULER_THICKNESS } from './consts';
+import './polyfill';
 
 async function initScene(width: number, height: number): Promise<Container> {
     const app = new Application();
