@@ -82,14 +82,7 @@ async function initScene(width: number, height: number): Promise<Container> {
     });
     console.log('ruler', ruler.width, ruler.height);
 
-    const zoomController = new ZoomController(app, canvasZone, zoom => {
-        // 这里可以处理缩放变化，例如更新标尺
-        ruler.setZoom(zoom);
-    });
-
     app.stage.addChild(ruler);
-    const g = new Graphics();
-    app.stage.addChild(g);
 
     // 创建拖放区域
     const dropZone = document.querySelector('#app') as HTMLElement;
@@ -130,7 +123,15 @@ async function initScene(width: number, height: number): Promise<Container> {
         },
     });
 
-    new SelectionController(app, canvasZone);
+    const topLayer = new Container();
+    topLayer.position.set(canvasZone.x, canvasZone.y);
+    app.stage.addChild(topLayer);
+    const selectionController = new SelectionController(app, topLayer);
+    new ZoomController(app, [canvasZone, topLayer], zoom => {
+        // 这里可以处理缩放变化，例如更新标尺
+        ruler.setZoom(zoom);
+        selectionController.updateSelf();
+    });
 
     return canvasZone;
 }

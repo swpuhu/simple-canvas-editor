@@ -2,7 +2,7 @@ import { Application, Container } from 'pixi.js';
 
 export class ZoomController {
     private app: Application;
-    private container: Container;
+    private containers: Container[];
     private minZoom = 0.1;
     private maxZoom = 5;
     private currentZoom = 1;
@@ -10,11 +10,11 @@ export class ZoomController {
 
     constructor(
         app: Application,
-        container: Container,
+        containers: Container[],
         onZoomChange?: (zoom: number) => void
     ) {
         this.app = app;
-        this.container = container;
+        this.containers = containers;
         this.onZoomChange = onZoomChange;
         this.initializeEvents();
     }
@@ -23,12 +23,7 @@ export class ZoomController {
         this.app.view.addEventListener('wheel', this.handleWheel);
     }
 
-    private handleWheel = (event: WheelEvent): void => {
-        // 检查是否按住 Command (Mac) 或 Ctrl (Windows)
-        if (!event.metaKey && !event.ctrlKey) return;
-
-        event.preventDefault();
-
+    private zoomContainer(event: WheelEvent, container: Container) {
         // 计算缩放增量
         const delta = -event.deltaY * 0.001;
         const newZoom = Math.min(
@@ -43,7 +38,7 @@ export class ZoomController {
             const mouseY = event.clientY - bounds.top;
 
             // 将鼠标位置转换为容器的本地坐标
-            const localPos = this.container.toLocal(
+            const localPos = container.toLocal(
                 { x: mouseX, y: mouseY },
                 this.app.stage
             );
@@ -56,7 +51,7 @@ export class ZoomController {
 
             // 应用新的缩放
             this.currentZoom = newZoom;
-            this.container.scale.set(this.currentZoom);
+            container.scale.set(this.currentZoom);
 
             // 计算缩放后的位置
             const afterTransform = {
@@ -65,12 +60,22 @@ export class ZoomController {
             };
 
             // 调整位置以保持鼠标指向的点不变
-            this.container.position.x += beforeTransform.x - afterTransform.x;
-            this.container.position.y += beforeTransform.y - afterTransform.y;
-
-            // 触发缩放变化回调
-            this.onZoomChange?.(this.currentZoom);
+            container.position.x += beforeTransform.x - afterTransform.x;
+            container.position.y += beforeTransform.y - afterTransform.y;
         }
+    }
+
+    private handleWheel = (event: WheelEvent): void => {
+        // 检查是否按住 Command (Mac) 或 Ctrl (Windows)
+        if (!event.metaKey && !event.ctrlKey) return;
+
+        event.preventDefault();
+        this.containers.forEach(container =>
+            this.zoomContainer(event, container)
+        );
+
+        // 触发缩放变化回调
+        this.onZoomChange?.(this.currentZoom);
     };
 
     public getCurrentZoom(): number {
@@ -79,7 +84,9 @@ export class ZoomController {
 
     public setZoom(zoom: number): void {
         this.currentZoom = Math.min(Math.max(zoom, this.minZoom), this.maxZoom);
-        this.container.scale.set(this.currentZoom);
+        this.containers.forEach(container =>
+            container.scale.set(this.currentZoom)
+        );
         this.onZoomChange?.(this.currentZoom);
     }
 

@@ -370,6 +370,11 @@ export class SelectionController {
         this.updateControlBoxSizeAndPos(sprite);
     }
 
+    public updateSelf() {
+        if (!this.selectedTarget) return;
+        this.updateControlBoxSizeAndPos(this.selectedTarget);
+    }
+
     @autobind
     private onHandleDragStart(
         event: FederatedPointerEvent,
