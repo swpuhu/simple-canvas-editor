@@ -1,5 +1,5 @@
 import './style.css';
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Container, Graphics, Rectangle, Text } from 'pixi.js';
 import { Ruler } from './Ruler';
 import { FileDrop } from './FileDrop';
 import { SpriteLoader } from './SpriteLoader';
@@ -75,12 +75,12 @@ async function initScene(width: number, height: number): Promise<Container> {
     mainZone.addChild(canvasZone);
     console.log('canvasZone', canvasZone.width, canvasZone.height);
 
-    const ruler = new Ruler({
+    const ruler = new Ruler(app, canvasZone, {
         width: remainWidth,
         height: remainHeight,
         thickness: RULER_THICKNESS,
-        measureContainer: canvasZone,
     });
+    console.log('ruler', ruler.width, ruler.height);
 
     const zoomController = new ZoomController(app, canvasZone, zoom => {
         // 这里可以处理缩放变化，例如更新标尺
@@ -88,6 +88,8 @@ async function initScene(width: number, height: number): Promise<Container> {
     });
 
     app.stage.addChild(ruler);
+    const g = new Graphics();
+    app.stage.addChild(g);
 
     // 创建拖放区域
     const dropZone = document.querySelector('#app') as HTMLElement;

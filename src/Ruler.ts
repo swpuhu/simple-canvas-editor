@@ -1,4 +1,4 @@
-import { Container, Graphics, Point, Text } from 'pixi.js';
+import { Application, Container, Graphics, Point, Text } from 'pixi.js';
 
 export interface RulerOptions {
     width: number;
@@ -7,7 +7,6 @@ export interface RulerOptions {
     majorUnit: number; // 每个大刻度包含几个小刻度
     color: number; // 标尺颜色
     thickness: number; // 标尺厚度
-    measureContainer?: Container; // 测量容器
 }
 
 export class Ruler extends Container {
@@ -17,7 +16,11 @@ export class Ruler extends Container {
     private graphics: Graphics;
     private currentZoom: number = 1; // 新增：当前缩放值
 
-    constructor(options: Partial<RulerOptions> = {}) {
+    constructor(
+        private app: Application,
+        private measureContainer: Container,
+        options: Partial<RulerOptions> = {}
+    ) {
         super();
 
         // 默认配置
@@ -82,34 +85,22 @@ export class Ruler extends Container {
     }
 
     private drawHorizontalMarks() {
-        const { unit, majorUnit, thickness, width, color } = this.options;
+        const { unit, color } = this.options;
 
-        for (let x = thickness; x <= width; x += unit) {
-            const isMajor = Math.round(x / unit) % majorUnit === 0;
-            const markHeight = isMajor ? thickness / 2 : thickness / 3;
-
-            this.graphics.moveTo(x, thickness);
-            this.graphics.lineTo(x, thickness - markHeight);
-            let xNumber = x;
-            if (this.options.measureContainer) {
-                const p = new Point(x, 0);
-                const worldP = this.graphics.toGlobal(p);
-                const pInMeasureContainer =
-                    this.options.measureContainer.toLocal(worldP);
-                xNumber = pInMeasureContainer.x;
+        let count = 0;
+        for (let x = 0; ; x += unit) {
+            if (this.drawHorizontalMark(x, count)) {
+                ++count;
+            } else {
+                break;
             }
-
-            // 在大刻度处添加数字
-            if (isMajor) {
-                const text = new Text({
-                    text: Math.round(xNumber).toString(),
-                    style: {
-                        fontSize: 10,
-                        fill: color,
-                    },
-                });
-                text.position.set(x - text.width / 2, 2);
-                this.horizontalRuler.addChild(text);
+        }
+        count = 0;
+        for (let x = 0; ; x -= unit) {
+            if (this.drawHorizontalMark(x, count)) {
+                ++count;
+            } else {
+                break;
             }
         }
         this.graphics.stroke({
@@ -118,35 +109,85 @@ export class Ruler extends Container {
         });
     }
 
+    private drawVerticalMark(y: number, count: number): boolean {
+        const { thickness, color } = this.options;
+
+        const globalPos = this.measureContainer.toGlobal(new Point(0, y));
+        const isMajor = count % 10 === 0;
+        ++count;
+
+        const markWidth = isMajor ? thickness / 2 : thickness / 3;
+        const posInGraphics = this.graphics.toLocal(globalPos);
+        const yNumber = posInGraphics.y;
+        if (globalPos.y < thickness || globalPos.y > this.app.screen.height) {
+            return false;
+        }
+
+        this.graphics.moveTo(thickness, yNumber);
+        this.graphics.lineTo(thickness - markWidth, yNumber);
+
+        if (isMajor) {
+            const text = new Text({
+                text: Math.round(y).toString(),
+                style: {
+                    fontSize: 10,
+                    fill: color,
+                },
+            });
+            text.position.set(2, yNumber - text.height / 2);
+            this.verticalRuler.addChild(text);
+        }
+        return true;
+    }
+
+    private drawHorizontalMark(x: number, count: number): boolean {
+        const { thickness, color } = this.options;
+
+        const globalPos = this.measureContainer.toGlobal(new Point(x, 0));
+        const isMajor = count % 10 === 0;
+        ++count;
+
+        const markWidth = isMajor ? thickness / 2 : thickness / 3;
+        const posInGraphics = this.graphics.toLocal(globalPos);
+        const xNumber = posInGraphics.x;
+        if (globalPos.x < thickness || globalPos.x > this.app.screen.width) {
+            return false;
+        }
+
+        this.graphics.moveTo(xNumber, thickness);
+        this.graphics.lineTo(xNumber, thickness - markWidth);
+
+        if (isMajor) {
+            const text = new Text({
+                text: Math.round(x).toString(),
+                style: {
+                    fontSize: 10,
+                    fill: color,
+                },
+            });
+            text.position.set(xNumber - text.height / 2, 2);
+            this.verticalRuler.addChild(text);
+        }
+        return true;
+    }
+
     private drawVerticalMarks() {
-        const { unit, majorUnit, thickness, height, color } = this.options;
+        const { unit, color } = this.options;
 
-        for (let y = thickness; y <= height; y += unit) {
-            const isMajor = Math.round(y / unit) % majorUnit === 0;
-            const markWidth = isMajor ? thickness / 2 : thickness / 3;
-
-            this.graphics.moveTo(thickness, y);
-            this.graphics.lineTo(thickness - markWidth, y);
-
-            let yNumber = y;
-            if (this.options.measureContainer) {
-                const p = new Point(0, y);
-                const worldP = this.graphics.toGlobal(p);
-                const pInMeasureContainer =
-                    this.options.measureContainer.toLocal(worldP);
-                yNumber = pInMeasureContainer.y;
+        let count = 0;
+        for (let y = 0; ; y += unit) {
+            if (this.drawVerticalMark(y, count)) {
+                ++count;
+            } else {
+                break;
             }
-
-            if (isMajor) {
-                const text = new Text({
-                    text: Math.round(yNumber).toString(),
-                    style: {
-                        fontSize: 10,
-                        fill: color,
-                    },
-                });
-                text.position.set(2, y - text.height / 2);
-                this.verticalRuler.addChild(text);
+        }
+        count = 0;
+        for (let y = 0; ; y -= unit) {
+            if (this.drawVerticalMark(y, count)) {
+                ++count;
+            } else {
+                break;
             }
         }
         this.graphics.stroke({
@@ -156,13 +197,6 @@ export class Ruler extends Container {
     }
 
     // 更新标尺尺寸
-    public resize(width: number, height: number) {
-        this.options.width = width;
-        this.options.height = height;
-        this.horizontalRuler.removeChildren();
-        this.verticalRuler.removeChildren();
-        this.draw();
-    }
 
     // 设置标尺单位
     public setUnit(unit: number, majorUnit?: number) {
