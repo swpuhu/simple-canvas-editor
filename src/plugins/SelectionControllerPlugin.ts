@@ -9,7 +9,7 @@ import {
     Text,
     Container,
 } from 'pixi.js';
-import { changeAnchor } from './util';
+import { changeAnchor } from '../util';
 
 const EDGE_COLOR = 0xffbb66;
 const HANDLE_COLOR = 0xffbb66;

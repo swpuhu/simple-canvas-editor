@@ -1,4 +1,4 @@
-import { Application, Sprite, Assets, Container } from 'pixi.js';
+import { Sprite, Assets, Container } from 'pixi.js';
 
 export interface SpriteOptions {
     x?: number;
@@ -12,11 +12,7 @@ export interface SpriteOptions {
 }
 
 export class SpriteLoader {
-    private app: Application;
-
-    constructor(app: Application) {
-        this.app = app;
-    }
+    constructor() {}
 
     /**
      * 从URL加载并创建Sprite
@@ -26,9 +22,9 @@ export class SpriteLoader {
      */
     public async loadSprite(
         url: string,
+        parent: Container,
         options: SpriteOptions = {},
-        hash?: string,
-        parent: Container = this.app.stage
+        hash?: string
     ): Promise<Sprite> {
         try {
             // v8中的纹理加载方式
@@ -91,8 +87,8 @@ export class SpriteLoader {
     async loadMultipleSprites(
         spriteConfigs: Array<{
             url: string;
+            parent: Container;
             options?: SpriteOptions;
-            parent?: Container;
             hash?: string;
         }>
     ) {
@@ -100,9 +96,9 @@ export class SpriteLoader {
             spriteConfigs.map(config =>
                 this.loadSprite(
                     config.url,
+                    config.parent,
                     config.options,
-                    config.hash,
-                    config.parent
+                    config.hash
                 )
             )
         );

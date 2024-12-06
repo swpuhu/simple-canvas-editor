@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { SelectionController } from './SelectionController';
+import { SelectionController } from './plugins/SelectionControllerPlugin';
 
 export class TransformPanel {
     private app: Application;

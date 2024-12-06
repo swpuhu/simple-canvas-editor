@@ -1,9 +1,9 @@
 import './style.css';
-import { Application, Container, Graphics, Rectangle, Text } from 'pixi.js';
-import { Ruler } from './Ruler';
-import { FileDrop } from './FileDrop';
+import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Ruler } from './plugins/RulerPlugin';
+import { FileDrop } from './uilts/FileDrop';
 import { SpriteLoader } from './SpriteLoader';
-import { SelectionController } from './SelectionController';
+import { SelectionController } from './plugins/SelectionControllerPlugin';
 import { ZoomController } from './ZoomController';
 
 async function initScene(width: number, height: number): Promise<Container> {
@@ -18,7 +18,7 @@ async function initScene(width: number, height: number): Promise<Container> {
     document.querySelector('#app')?.appendChild(app.view as HTMLCanvasElement);
 
     // 创建SpriteLoader实例
-    const spriteLoader = new SpriteLoader(app);
+    const spriteLoader = new SpriteLoader();
 
     const RULER_THICKNESS = 30;
 
