@@ -11,15 +11,18 @@ import './polyfill';
 async function initScene(width: number, height: number): Promise<Container> {
     const app = new Application();
 
+    const container: HTMLElement | null = document.querySelector('#app');
+    if (!container) {
+        throw new Error('container not found');
+    }
     await app.init({
         width: width,
         height: height,
         backgroundColor: 0xffffff,
+        resizeTo: container,
     });
 
-    document
-        .querySelector('#app')
-        ?.appendChild(app.canvas as HTMLCanvasElement);
+    container.appendChild(app.canvas as HTMLCanvasElement);
 
     const scene = new Scene(app);
 
@@ -38,6 +41,10 @@ async function initScene(width: number, height: number): Promise<Container> {
     });
 
     pluginManager.ready();
+
+    app.renderer.on('resize', () => {
+        scene.resize(app.renderer.width, app.renderer.height);
+    });
 
     return scene.canvasZone;
 }

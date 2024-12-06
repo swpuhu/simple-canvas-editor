@@ -249,7 +249,7 @@ export class SelectionController extends AbstractPlugin {
             { x: 0, y: 0.5 }, // 左中
         ];
 
-        positions.forEach((pos, index) => {
+        positions.forEach((_pos, index) => {
             const handle = new Graphics();
             handle.eventMode = 'static';
             handle.cursor = this.getHandleCursor(index);

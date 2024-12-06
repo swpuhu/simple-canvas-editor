@@ -4,6 +4,13 @@ import { RULER_THICKNESS } from './consts';
 export class Scene {
     private _canvasZone: Container;
     private _topLayer: Container;
+    private remainWidth: number;
+    private remainHeight: number;
+    private centerX: number;
+    private centerY: number;
+    private mainZone: Container;
+    private mainZoneGraphic: Graphics;
+
     constructor(private app: Application) {
         this.initScene();
     }
@@ -20,7 +27,9 @@ export class Scene {
         const app = this.app;
 
         const mainZone = new Container();
+        this.mainZone = mainZone;
         const mainZoneGraphic = new Graphics();
+        this.mainZoneGraphic = mainZoneGraphic;
 
         const remainWidth = this.app.screen.width - RULER_THICKNESS;
         const remainHeight = this.app.screen.height - RULER_THICKNESS;
@@ -81,5 +90,27 @@ export class Scene {
 
         this._canvasZone = canvasZone;
         this._topLayer = topLayer;
+
+        this.remainWidth = remainWidth;
+        this.remainHeight = remainHeight;
+        this.centerX = centerX;
+        this.centerY = centerY;
+    }
+
+    public resize(width: number, height: number) {
+        this.remainWidth = width - RULER_THICKNESS;
+        this.remainHeight = height - RULER_THICKNESS;
+        this.centerX = RULER_THICKNESS + this.remainWidth / 2;
+        this.centerY = RULER_THICKNESS + this.remainHeight / 2;
+
+        this.mainZone.position.set(this.centerX, this.centerY);
+        this.mainZoneGraphic.clear();
+        this.mainZoneGraphic.rect(
+            -this.remainWidth / 2,
+            -this.remainHeight / 2,
+            this.remainWidth,
+            this.remainHeight
+        );
+        this.mainZoneGraphic.fill({ color: 0xcccccc, alpha: 0.5 });
     }
 }
