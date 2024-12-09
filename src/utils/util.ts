@@ -110,3 +110,32 @@ export function getNodeRectPointsInParent(node: Sprite | Text): PointData[] {
         return matrix.apply(point);
     });
 }
+
+export function computeViewSize(
+    viewWidth: number,
+    viewHeight: number,
+    designWidth: number,
+    designHeight: number
+): {
+    width: number;
+    height: number;
+} {
+    const designAspectRatio = designWidth / designHeight;
+    if (designAspectRatio > 1) {
+        // 宽大于高，以viewWidth * 0.9 为基准，计算设计尺寸
+        const realDesignWidth = viewWidth * 0.9;
+        const realDesignHeight = realDesignWidth / designAspectRatio;
+        return {
+            width: realDesignWidth,
+            height: realDesignHeight,
+        };
+    } else {
+        // 高大于宽，以viewHeight * 0.9 为基准，计算设计尺寸
+        const realDesignHeight = viewHeight * 0.9;
+        const realDesignWidth = realDesignHeight * designAspectRatio;
+        return {
+            width: realDesignWidth,
+            height: realDesignHeight,
+        };
+    }
+}

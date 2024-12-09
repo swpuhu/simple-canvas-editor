@@ -24,7 +24,10 @@ async function initScene(width: number, height: number): Promise<Container> {
 
     container.appendChild(app.canvas as HTMLCanvasElement);
 
-    const scene = new Scene(app);
+    const scene = new Scene(app, {
+        designWidth: 500,
+        designHeight: 1080,
+    });
 
     const pluginManager = new PluginManager(app, {
         canvasZone: scene.canvasZone,

@@ -1,5 +1,6 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import { RULER_THICKNESS } from './consts';
+import { computeViewSize } from './utils/util';
 
 export class Scene {
     private _canvasZone: Container;
@@ -10,8 +11,22 @@ export class Scene {
     private centerY: number;
     private mainZone: Container;
     private mainZoneGraphic: Graphics;
+    private designWidth: number = 0;
+    private designHeight: number = 0;
 
-    constructor(private app: Application) {
+    constructor(
+        private app: Application,
+        options?: {
+            designWidth: number;
+            designHeight: number;
+        }
+    ) {
+        this.designWidth = this.app.screen.width - RULER_THICKNESS;
+        this.designHeight = this.app.screen.height - RULER_THICKNESS;
+        if (options) {
+            this.designWidth = options.designWidth;
+            this.designHeight = options.designHeight;
+        }
         this.initScene();
     }
 
@@ -53,8 +68,16 @@ export class Scene {
         app.stage.addChild(mainZone);
 
         const canvasZone = new Container();
-        const canvasHeight = remainHeight * 0.8;
-        const canvasWidth = canvasHeight * 0.6;
+        const { width: realWidth, height: realHeight } = computeViewSize(
+            remainWidth,
+            remainHeight,
+            this.designWidth,
+            this.designHeight
+        );
+        const canvasHeight = this.designHeight;
+        const canvasWidth = this.designWidth;
+        const scaleX = realWidth / canvasWidth;
+        const scaleY = realHeight / canvasHeight;
 
         const canvasBackground = new Graphics();
         canvasBackground.setSize(canvasWidth, canvasHeight);
@@ -85,6 +108,9 @@ export class Scene {
         const topLayer = new Container();
         topLayer.position.set(canvasZone.x, canvasZone.y);
         mainZone.addChild(topLayer);
+
+        canvasZone.scale.set(scaleX, scaleY);
+        topLayer.scale.set(scaleX, scaleY);
 
         console.log('canvasZone', canvasZone.width, canvasZone.height);
 

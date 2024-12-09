@@ -13,6 +13,7 @@ export class ZoomControllerPlugin extends AbstractPlugin {
         layers: { canvasZone: Container; topLayer: Container }
     ): void {
         this.containers = [layers.canvasZone, layers.topLayer];
+        this.currentZoom = this.containers[0].scale.x;
         this.initializeEvents();
     }
     public onLoad(): void {}
