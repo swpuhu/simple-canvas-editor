@@ -6,7 +6,7 @@ in vec2 vUV;
 
 uniform sampler2D uTexture;
 uniform vec2 uSize;
-uniform vec3 uColor;
+uniform vec3 uShadowColor;
 uniform float uPad;
 
 void main() {
@@ -16,10 +16,10 @@ void main() {
 
     float pad = uPad;
 
-    float f = sdBox(uv, vec2(uSize - uPad) / 2.0);
+    float f = sdBox(uv, vec2(uSize - vec2(uPad)) / 2.0);
 
     f = smoothstep(pad * 0.3, -pad * 0.2, f);
 
-    vec3 color = uColor;
+    vec3 color = uShadowColor;
     gl_FragColor = vec4(color * f, f);
 }

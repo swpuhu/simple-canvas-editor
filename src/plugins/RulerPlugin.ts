@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Point, Text } from 'pixi.js';
+import { Container, Graphics, Point, Text } from 'pixi.js';
 import { AbstractPlugin } from './AbstractPlugin';
 import { RULER_THICKNESS } from '../consts';
 

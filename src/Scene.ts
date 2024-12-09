@@ -21,10 +21,11 @@ export class Scene {
     private centerX: number;
     private centerY: number;
     private _mainZone: Container;
-    private mainZoneGraphic: Graphics;
     private designWidth: number = 0;
     private designHeight: number = 0;
-    private shadowMesh: Mesh<Geometry, Shader>;
+    private _backgroundZone: Container;
+    private _backgroundGraphic: Graphics;
+    private _backgroundMask: Graphics;
     constructor(
         private app: Application,
         options?: {
@@ -63,6 +64,7 @@ export class Scene {
         const mainZone = new Container();
         const backgroundZone = new Container();
         const backgroundGraphic = new Graphics();
+        this._backgroundGraphic = backgroundGraphic;
 
         this._mainZone = mainZone;
 
@@ -86,6 +88,7 @@ export class Scene {
         backgroundGraphic.fill({ color: 0xcccccc, alpha: 1.0 });
 
         const backgroundMask = new Graphics();
+        this._backgroundMask = backgroundMask;
         backgroundMask.rect(
             -remainWidth / 2,
             -remainHeight / 2,
@@ -121,7 +124,7 @@ export class Scene {
                         type: 'vec2<f32>',
                         value: [realWidth + 50, realHeight + 50],
                     },
-                    uColor: {
+                    uShadowColor: {
                         type: 'vec3<f32>',
                         value: [0.5, 0.5, 0.5],
                     },
@@ -177,6 +180,7 @@ export class Scene {
         console.log('canvasZone', canvasZone.width, canvasZone.height);
 
         this._canvasZone = canvasZone;
+        this._backgroundZone = backgroundZone;
         this._topLayer = topLayer;
         this._bottomLayer = bottomLayer;
         this.remainWidth = remainWidth;
@@ -192,19 +196,28 @@ export class Scene {
     public onZoomChange(zoom: number) {}
 
     public resize(width: number, height: number) {
+        // console.log('resize', width, height);
         this.remainWidth = width - RULER_THICKNESS;
         this.remainHeight = height - RULER_THICKNESS;
         this.centerX = RULER_THICKNESS + this.remainWidth / 2;
         this.centerY = RULER_THICKNESS + this.remainHeight / 2;
 
-        this.mainZone.position.set(this.centerX, this.centerY);
-        this.mainZoneGraphic.clear();
-        this.mainZoneGraphic.rect(
+        this._backgroundZone.position.set(this.centerX, this.centerY);
+        this._backgroundGraphic.clear();
+        this._backgroundGraphic.rect(
             -this.remainWidth / 2,
             -this.remainHeight / 2,
             this.remainWidth,
             this.remainHeight
         );
-        this.mainZoneGraphic.fill({ color: 0xcccccc, alpha: 0.5 });
+        this._backgroundMask.clear();
+        this._backgroundMask.rect(
+            -this.remainWidth / 2,
+            -this.remainHeight / 2,
+            this.remainWidth,
+            this.remainHeight
+        );
+        this._backgroundMask.fill({ color: 0xffffff });
+        this._backgroundGraphic.fill({ color: 0xcccccc, alpha: 1 });
     }
 }
