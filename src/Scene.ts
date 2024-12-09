@@ -1,19 +1,30 @@
-import { Application, Container, Graphics } from 'pixi.js';
+import {
+    Application,
+    Container,
+    Geometry,
+    Graphics,
+    Mesh,
+    Shader,
+} from 'pixi.js';
 import { RULER_THICKNESS } from './consts';
 import { computeViewSize } from './utils/util';
+import { QuadGeometry } from './geometry/QuadGeometry';
+import normalVertex from './shaders/normal.vert.glsl';
+import shadowFrag from './shaders/rectShadow.frag.glsl';
 
 export class Scene {
     private _canvasZone: Container;
     private _topLayer: Container;
+    private _bottomLayer: Container;
     private remainWidth: number;
     private remainHeight: number;
     private centerX: number;
     private centerY: number;
-    private mainZone: Container;
+    private _mainZone: Container;
     private mainZoneGraphic: Graphics;
     private designWidth: number = 0;
     private designHeight: number = 0;
-
+    private shadowMesh: Mesh<Geometry, Shader>;
     constructor(
         private app: Application,
         options?: {
@@ -38,13 +49,22 @@ export class Scene {
         return this._topLayer;
     }
 
+    get bottomLayer() {
+        return this._bottomLayer;
+    }
+
+    get mainZone() {
+        return this._mainZone;
+    }
+
     initScene() {
         const app = this.app;
 
         const mainZone = new Container();
-        this.mainZone = mainZone;
-        const mainZoneGraphic = new Graphics();
-        this.mainZoneGraphic = mainZoneGraphic;
+        const backgroundZone = new Container();
+        const backgroundGraphic = new Graphics();
+
+        this._mainZone = mainZone;
 
         const remainWidth = this.app.screen.width - RULER_THICKNESS;
         const remainHeight = this.app.screen.height - RULER_THICKNESS;
@@ -56,16 +76,18 @@ export class Scene {
         mainZone.y = centerY;
         mainZone.setSize(remainWidth, remainHeight);
 
-        mainZoneGraphic.rect(
+        backgroundZone.addChild(backgroundGraphic);
+        backgroundZone.position.set(centerX, centerY);
+        backgroundZone.setSize(remainWidth, remainHeight);
+
+        backgroundGraphic.rect(
             -remainWidth / 2,
             -remainHeight / 2,
             remainWidth,
             remainHeight
         );
-        mainZoneGraphic.circle(0, 0, 3);
-        mainZoneGraphic.fill({ color: 0xcccccc, alpha: 0.5 });
-        mainZone.addChild(mainZoneGraphic);
-        app.stage.addChild(mainZone);
+        backgroundGraphic.circle(0, 0, 3);
+        backgroundGraphic.fill({ color: 0xcccccc, alpha: 1.0 });
 
         const canvasZone = new Container();
         const { width: realWidth, height: realHeight } = computeViewSize(
@@ -79,16 +101,44 @@ export class Scene {
         const scaleX = realWidth / canvasWidth;
         const scaleY = realHeight / canvasHeight;
 
-        const canvasBackground = new Graphics();
-        canvasBackground.setSize(canvasWidth, canvasHeight);
-        canvasBackground.rect(
+        const canvasZoneGraphics = new Graphics();
+        const quadGeometry = new QuadGeometry(realWidth + 50, realHeight + 50);
+        const shader = Shader.from({
+            gl: {
+                vertex: normalVertex,
+                fragment: shadowFrag,
+            },
+            resources: {
+                shadowUniforms: {
+                    uSize: {
+                        type: 'vec2<f32>',
+                        value: [realWidth + 50, realHeight + 50],
+                    },
+                    uColor: {
+                        type: 'vec3<f32>',
+                        value: [0.5, 0.5, 0.5],
+                    },
+                    uPad: {
+                        type: 'f32',
+                        value: 50.0,
+                    },
+                },
+            },
+        });
+
+        const shadowMesh = new Mesh(quadGeometry.geo, shader);
+        this.shadowMesh = shadowMesh;
+        mainZone.addChild(shadowMesh);
+
+        canvasZoneGraphics.setSize(canvasWidth, canvasHeight);
+        canvasZoneGraphics.rect(
             -canvasWidth / 2,
             -canvasHeight / 2,
             canvasWidth,
             canvasHeight
         );
-        canvasBackground.fill({ color: 0xffffff });
-        canvasBackground.stroke({ color: 0xfb6, width: 2 });
+        canvasZoneGraphics.fill({ color: 0xffffff });
+        canvasZoneGraphics.stroke({ color: 0xfb6, width: 2 });
 
         const canvasMask = new Graphics();
         canvasMask.rect(
@@ -99,15 +149,20 @@ export class Scene {
         );
         canvasMask.fill({ color: 0xffffff });
 
-        canvasZone.addChild(canvasBackground);
+        canvasZone.addChild(canvasZoneGraphics);
         canvasZone.mask = canvasMask;
         canvasZone.addChild(canvasMask);
 
         mainZone.addChild(canvasZone);
 
         const topLayer = new Container();
-        topLayer.position.set(canvasZone.x, canvasZone.y);
+        topLayer.position.set(mainZone.x, mainZone.y);
         mainZone.addChild(topLayer);
+
+        const bottomLayer = new Container();
+        console.log('bottomLayer', mainZone.x, mainZone.y);
+        bottomLayer.position.set(mainZone.x, mainZone.y);
+        mainZone.addChild(bottomLayer);
 
         canvasZone.scale.set(scaleX, scaleY);
         topLayer.scale.set(scaleX, scaleY);
@@ -116,12 +171,18 @@ export class Scene {
 
         this._canvasZone = canvasZone;
         this._topLayer = topLayer;
-
+        this._bottomLayer = bottomLayer;
         this.remainWidth = remainWidth;
         this.remainHeight = remainHeight;
         this.centerX = centerX;
         this.centerY = centerY;
+
+        app.stage.addChild(this._bottomLayer);
+        app.stage.addChild(backgroundZone);
+        app.stage.addChild(mainZone);
     }
+
+    public onZoomChange(zoom: number) {}
 
     public resize(width: number, height: number) {
         this.remainWidth = width - RULER_THICKNESS;

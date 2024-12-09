@@ -16,10 +16,7 @@ export class Ruler extends AbstractPlugin {
     private graphics: Graphics;
     private measureContainer: Container;
     public container: Container;
-    public init(
-        app: Application,
-        layers: { canvasZone: Container; topLayer: Container }
-    ): void {
+    public init(): void {
         this.options = {
             unit: 10, // 10px为一个小刻度
             majorUnit: 5, // 每5个小刻度显示一个大刻度
@@ -31,13 +28,13 @@ export class Ruler extends AbstractPlugin {
         this.verticalTextContainer = new Container();
         this.graphics = new Graphics();
         this.container = new Container();
-        const canvasZone = layers.canvasZone;
+        const canvasZone = this.layers.canvasZone;
         this.measureContainer = canvasZone;
         this.container.addChild(this.graphics);
         this.container.addChild(this.horizontalTextContainer);
         this.container.addChild(this.verticalTextContainer);
 
-        app.stage.addChild(this.container);
+        this.app.stage.addChild(this.container);
     }
     public onLoad(): void {
         this.draw();

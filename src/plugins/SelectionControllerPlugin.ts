@@ -32,11 +32,8 @@ export class SelectionController extends AbstractPlugin {
     private startAngle = 0;
     private container: Container;
 
-    public init(
-        _app: Application,
-        layers: { canvasZone: Container; topLayer: Container }
-    ): void {
-        this.container = layers.topLayer;
+    public init(): void {
+        this.container = this.layers.topLayer;
         this.initializeEvents();
         this.createControlBox();
         this.createTransformHandles();

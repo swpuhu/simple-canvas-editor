@@ -1,19 +1,14 @@
-import { Application, Container } from 'pixi.js';
+import { Container } from 'pixi.js';
 import { AbstractPlugin } from './AbstractPlugin';
 
 export class ZoomControllerPlugin extends AbstractPlugin {
-    private containers: Container[];
     private minZoom = 0.1;
     private maxZoom = 5;
     private currentZoom = 1;
     private onZoomChange?: (zoom: number) => void;
 
-    public init(
-        _app: Application,
-        layers: { canvasZone: Container; topLayer: Container }
-    ): void {
-        this.containers = [layers.canvasZone, layers.topLayer];
-        this.currentZoom = this.containers[0].scale.x;
+    public init(): void {
+        this.currentZoom = this.layers.mainZone.scale.x;
         this.initializeEvents();
     }
     public onLoad(): void {}
@@ -73,9 +68,8 @@ export class ZoomControllerPlugin extends AbstractPlugin {
         if (!event.metaKey && !event.ctrlKey) return;
 
         event.preventDefault();
-        this.containers.forEach(container =>
-            this.zoomContainer(event, container)
-        );
+
+        this.zoomContainer(event, this.layers.mainZone);
 
         // 触发缩放变化回调
         this.onZoomChange?.(this.currentZoom);
@@ -87,9 +81,7 @@ export class ZoomControllerPlugin extends AbstractPlugin {
 
     public setZoom(zoom: number): void {
         this.currentZoom = Math.min(Math.max(zoom, this.minZoom), this.maxZoom);
-        this.containers.forEach(container =>
-            container.scale.set(this.currentZoom)
-        );
+        this.layers.mainZone.scale.set(this.currentZoom);
         this.onZoomChange?.(this.currentZoom);
     }
 

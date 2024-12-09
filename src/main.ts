@@ -25,13 +25,14 @@ async function initScene(width: number, height: number): Promise<Container> {
     container.appendChild(app.canvas as HTMLCanvasElement);
 
     const scene = new Scene(app, {
-        designWidth: 500,
+        designWidth: 800,
         designHeight: 1080,
     });
 
     const pluginManager = new PluginManager(app, {
         canvasZone: scene.canvasZone,
         topLayer: scene.topLayer,
+        mainZone: scene.mainZone,
     });
 
     const ruler = pluginManager.usePlugin(Ruler);
@@ -41,6 +42,7 @@ async function initScene(width: number, height: number): Promise<Container> {
     zoomControllerPlugin.setOnZoomChange(zoom => {
         ruler.setZoom(zoom);
         selectionController.updateSelf();
+        scene.onZoomChange(zoom);
     });
 
     pluginManager.ready();
