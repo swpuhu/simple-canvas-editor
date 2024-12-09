@@ -1,11 +1,4 @@
-import {
-    Application,
-    Container,
-    Geometry,
-    Graphics,
-    Mesh,
-    Shader,
-} from 'pixi.js';
+import { Application, Container, Graphics, Mesh, Shader } from 'pixi.js';
 import { RULER_THICKNESS } from './consts';
 import { computeViewSize } from './utils/util';
 import { QuadGeometry } from './geometry/QuadGeometry';
@@ -137,7 +130,6 @@ export class Scene {
         });
 
         const shadowMesh = new Mesh(quadGeometry.geo, shader);
-        this.shadowMesh = shadowMesh;
         mainZone.addChild(shadowMesh);
 
         canvasZoneGraphics.setSize(canvasWidth, canvasHeight);

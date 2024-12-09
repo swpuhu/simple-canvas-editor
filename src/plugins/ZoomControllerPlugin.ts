@@ -6,9 +6,13 @@ export class ZoomControllerPlugin extends AbstractPlugin {
     private maxZoom = 5;
     private currentZoom = 1;
     private onZoomChange?: (zoom: number) => void;
+    private isSpacePressed = false;
+    private isDragging = false;
+    private lastMousePosition = { x: 0, y: 0 };
 
     public init(): void {
         this.currentZoom = this.layers.mainZone.scale.x;
+        this.app.canvas.addEventListener('contextmenu', this.handleContextMenu);
         this.initializeEvents();
     }
     public onLoad(): void {}
@@ -19,7 +23,57 @@ export class ZoomControllerPlugin extends AbstractPlugin {
 
     private initializeEvents(): void {
         this.app.canvas.addEventListener('wheel', this.handleWheel);
+        window.addEventListener('keydown', this.handleKeyDown);
+        window.addEventListener('keyup', this.handleKeyUp);
+        this.app.canvas.addEventListener('mousedown', this.handleMouseDown);
+        window.addEventListener('mouseup', this.handleMouseUp);
+        window.addEventListener('mousemove', this.handleMouseMove);
     }
+
+    private handleKeyDown = (event: KeyboardEvent): void => {
+        if (event.code === 'Space') {
+            event.preventDefault();
+            this.isSpacePressed = true;
+            this.app.canvas.style.cursor = 'grab';
+        }
+    };
+
+    private handleKeyUp = (event: KeyboardEvent): void => {
+        if (event.code === 'Space') {
+            this.isSpacePressed = false;
+            this.app.canvas.style.cursor = 'default';
+        }
+    };
+
+    private handleMouseDown = (event: MouseEvent): void => {
+        if (event.button === 2 && this.isSpacePressed) {
+            event.preventDefault();
+            this.isDragging = true;
+            this.lastMousePosition = { x: event.clientX, y: event.clientY };
+            this.app.canvas.style.cursor = 'grabbing';
+        }
+    };
+
+    private handleMouseUp = (event: MouseEvent): void => {
+        if (event.button === 2) {
+            this.isDragging = false;
+            this.app.canvas.style.cursor = this.isSpacePressed
+                ? 'grab'
+                : 'default';
+        }
+    };
+
+    private handleMouseMove = (event: MouseEvent): void => {
+        if (this.isDragging) {
+            const deltaX = event.clientX - this.lastMousePosition.x;
+            const deltaY = event.clientY - this.lastMousePosition.y;
+
+            this.layers.mainZone.position.x += deltaX;
+            this.layers.mainZone.position.y += deltaY;
+
+            this.lastMousePosition = { x: event.clientX, y: event.clientY };
+        }
+    };
 
     private zoomContainer(event: WheelEvent, container: Container) {
         // 计算缩放增量
@@ -41,7 +95,7 @@ export class ZoomControllerPlugin extends AbstractPlugin {
                 this.app.stage
             );
 
-            // 保存缩放前的位置
+            // 存缩放前的位置
             const beforeTransform = {
                 x: localPos.x * this.currentZoom,
                 y: localPos.y * this.currentZoom,
@@ -57,7 +111,7 @@ export class ZoomControllerPlugin extends AbstractPlugin {
                 y: localPos.y * this.currentZoom,
             };
 
-            // 调整位置以保持鼠标指向的点不变
+            // 调整置以保持鼠标指向的点不变
             container.position.x += beforeTransform.x - afterTransform.x;
             container.position.y += beforeTransform.y - afterTransform.y;
         }
@@ -87,5 +141,18 @@ export class ZoomControllerPlugin extends AbstractPlugin {
 
     public destroy(): void {
         this.app.canvas.removeEventListener('wheel', this.handleWheel);
+        window.removeEventListener('keydown', this.handleKeyDown);
+        window.removeEventListener('keyup', this.handleKeyUp);
+        this.app.canvas.removeEventListener('mousedown', this.handleMouseDown);
+        window.removeEventListener('mouseup', this.handleMouseUp);
+        window.removeEventListener('mousemove', this.handleMouseMove);
+        this.app.canvas.removeEventListener(
+            'contextmenu',
+            this.handleContextMenu
+        );
     }
+
+    private handleContextMenu = (event: MouseEvent): void => {
+        event.preventDefault();
+    };
 }
