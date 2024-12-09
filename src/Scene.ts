@@ -69,12 +69,8 @@ export class Scene {
         const remainWidth = this.app.screen.width - RULER_THICKNESS;
         const remainHeight = this.app.screen.height - RULER_THICKNESS;
 
-        console.log('mainZone', remainWidth, remainHeight);
         const centerX = RULER_THICKNESS + remainWidth / 2;
         const centerY = RULER_THICKNESS + remainHeight / 2;
-        mainZone.x = centerX;
-        mainZone.y = centerY;
-        mainZone.setSize(remainWidth, remainHeight);
 
         backgroundZone.addChild(backgroundGraphic);
         backgroundZone.position.set(centerX, centerY);
@@ -88,6 +84,17 @@ export class Scene {
         );
         backgroundGraphic.circle(0, 0, 3);
         backgroundGraphic.fill({ color: 0xcccccc, alpha: 1.0 });
+
+        const backgroundMask = new Graphics();
+        backgroundMask.rect(
+            -remainWidth / 2,
+            -remainHeight / 2,
+            remainWidth,
+            remainHeight
+        );
+        backgroundMask.fill({ color: 0xffffff });
+        backgroundZone.mask = backgroundMask;
+        backgroundZone.addChild(backgroundMask);
 
         const canvasZone = new Container();
         const { width: realWidth, height: realHeight } = computeViewSize(
@@ -178,8 +185,8 @@ export class Scene {
         this.centerY = centerY;
 
         app.stage.addChild(this._bottomLayer);
+        backgroundZone.addChild(mainZone);
         app.stage.addChild(backgroundZone);
-        app.stage.addChild(mainZone);
     }
 
     public onZoomChange(zoom: number) {}

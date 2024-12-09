@@ -121,7 +121,8 @@ export function computeViewSize(
     height: number;
 } {
     const designAspectRatio = designWidth / designHeight;
-    if (designAspectRatio > 1) {
+    const viewAspectRatio = viewWidth / viewHeight;
+    if (designAspectRatio > viewAspectRatio) {
         // 宽大于高，以viewWidth * 0.9 为基准，计算设计尺寸
         const realDesignWidth = viewWidth * 0.9;
         const realDesignHeight = realDesignWidth / designAspectRatio;
