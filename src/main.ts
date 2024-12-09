@@ -7,6 +7,7 @@ import { PluginManager } from './PluginManager';
 import { FileDropPlugin } from './plugins/FileDropPlugin';
 import { ZoomControllerPlugin } from './plugins/ZoomControllerPlugin';
 import './polyfill';
+import { Events } from './consts';
 
 async function initScene(width: number, height: number): Promise<Container> {
     const app = new Application();
@@ -39,6 +40,10 @@ async function initScene(width: number, height: number): Promise<Container> {
     pluginManager.usePlugin(FileDropPlugin);
     const selectionController = pluginManager.usePlugin(SelectionController);
     const zoomControllerPlugin = pluginManager.usePlugin(ZoomControllerPlugin);
+    zoomControllerPlugin.on(Events.CANVAS_TRANSLATE, () => {
+        ruler.reDraw();
+    });
+    ruler.setZoom(zoomControllerPlugin.getCurrentZoom());
     zoomControllerPlugin.setOnZoomChange(zoom => {
         ruler.setZoom(zoom);
         selectionController.updateSelf();

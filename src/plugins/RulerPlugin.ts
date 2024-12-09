@@ -16,6 +16,8 @@ export class Ruler extends AbstractPlugin {
     private graphics: Graphics;
     private measureContainer: Container;
     public container: Container;
+
+    private zoom: number = 1;
     public init(): void {
         this.options = {
             unit: 10, // 10px为一个小刻度
@@ -115,6 +117,9 @@ export class Ruler extends AbstractPlugin {
             return false;
         }
 
+        if (!isMajor && this.zoom < 1.5) {
+            return true;
+        }
         this.graphics.moveTo(thickness, yNumber);
         this.graphics.lineTo(thickness - markWidth, yNumber);
 
@@ -137,6 +142,7 @@ export class Ruler extends AbstractPlugin {
 
         const globalPos = this.measureContainer.toGlobal(new Point(x, 0));
         const isMajor = count % 10 === 0;
+
         ++count;
 
         const markWidth = isMajor ? thickness / 2 : thickness / 3;
@@ -144,6 +150,9 @@ export class Ruler extends AbstractPlugin {
         const xNumber = posInGraphics.x;
         if (globalPos.x < thickness || globalPos.x > this.app.screen.width) {
             return false;
+        }
+        if (!isMajor && this.zoom < 1.5) {
+            return true;
         }
 
         this.graphics.moveTo(xNumber, thickness);
@@ -164,8 +173,8 @@ export class Ruler extends AbstractPlugin {
     }
 
     private drawVerticalMarks() {
-        const { unit, color } = this.options;
-
+        const { color } = this.options;
+        const unit = this.getUnitSize();
         let count = 0;
         for (let y = 0; ; y += unit) {
             if (this.drawVerticalMark(y, count)) {
@@ -191,31 +200,33 @@ export class Ruler extends AbstractPlugin {
     // 更新标尺尺寸
 
     // 设置标尺单位
-    public setUnit(unit: number, majorUnit?: number) {
-        this.options.unit = unit;
-        if (majorUnit) {
-            this.options.majorUnit = majorUnit;
+
+    public getUnitSize(): number {
+        if (this.zoom === 1) {
+            return 20;
+        } else if (this.zoom > 1 && this.zoom < 2) {
+            return 10;
+        } else if (this.zoom > 2 && this.zoom < 4) {
+            return 5;
+        } else if (this.zoom > 4 && this.zoom < 8) {
+            return 2;
+        } else if (this.zoom > 8) {
+            return 1;
         }
-        this.horizontalTextContainer.removeChildren();
-        this.verticalTextContainer.removeChildren();
-        this.draw();
+        return Math.floor(this.options.unit / this.zoom);
     }
 
     // 新增：设置缩放的方法
     public setZoom(zoom: number) {
         // 根据缩放调整单位
-        const baseUnit = 10; // 基础单位为10像素
-        const adjustedUnit = baseUnit * (1 / zoom);
-
-        // 调整主要刻度的间隔
-        let majorUnit = 5;
-        if (zoom < 0.5) {
-            majorUnit = 10;
-        } else if (zoom > 2) {
-            majorUnit = 2;
-        }
-
+        this.zoom = zoom;
         // 更新标尺
-        this.setUnit(adjustedUnit, majorUnit);
+        this.horizontalTextContainer.removeChildren();
+        this.verticalTextContainer.removeChildren();
+        this.draw();
+    }
+
+    public reDraw() {
+        this.setZoom(this.zoom);
     }
 }

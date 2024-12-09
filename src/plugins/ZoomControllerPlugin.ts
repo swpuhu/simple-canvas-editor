@@ -1,5 +1,6 @@
 import { Container } from 'pixi.js';
 import { AbstractPlugin } from './AbstractPlugin';
+import { Events } from '../consts';
 
 export class ZoomControllerPlugin extends AbstractPlugin {
     private minZoom = 0.1;
@@ -72,6 +73,7 @@ export class ZoomControllerPlugin extends AbstractPlugin {
             this.layers.mainZone.position.y += deltaY;
 
             this.lastMousePosition = { x: event.clientX, y: event.clientY };
+            this.emit(Events.CANVAS_TRANSLATE);
         }
     };
 
