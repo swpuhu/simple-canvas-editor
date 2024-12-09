@@ -19,6 +19,7 @@ export class Scene {
     private _backgroundZone: Container;
     private _backgroundGraphic: Graphics;
     private _backgroundMask: Graphics;
+    private _contentZone: Container;
     constructor(
         private app: Application,
         options?: {
@@ -49,6 +50,10 @@ export class Scene {
 
     get mainZone() {
         return this._mainZone;
+    }
+
+    get contentZone() {
+        return this._contentZone;
     }
 
     initScene() {
@@ -93,6 +98,8 @@ export class Scene {
         backgroundZone.addChild(backgroundMask);
 
         const canvasZone = new Container();
+        const contentZone = new Container();
+        this._contentZone = contentZone;
         const { width: realWidth, height: realHeight } = computeViewSize(
             remainWidth,
             remainHeight,
@@ -154,6 +161,7 @@ export class Scene {
         canvasZone.addChild(canvasZoneGraphics);
         canvasZone.mask = canvasMask;
         canvasZone.addChild(canvasMask);
+        canvasZone.addChild(contentZone);
 
         mainZone.addChild(canvasZone);
 

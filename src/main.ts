@@ -8,6 +8,7 @@ import { FileDropPlugin } from './plugins/FileDropPlugin';
 import { ZoomControllerPlugin } from './plugins/ZoomControllerPlugin';
 import './polyfill';
 import { Events } from './consts';
+import { deserializePixiElement, serialize } from './utils/serialize';
 
 async function initScene(width: number, height: number): Promise<Container> {
     const app = new Application();
@@ -27,7 +28,7 @@ async function initScene(width: number, height: number): Promise<Container> {
 
     const scene = new Scene(app, {
         designWidth: 800,
-        designHeight: 1080,
+        designHeight: 500,
     });
 
     const pluginManager = new PluginManager(app, {
@@ -56,12 +57,12 @@ async function initScene(width: number, height: number): Promise<Container> {
         scene.resize(app.renderer.width, app.renderer.height);
     });
 
-    return scene.canvasZone;
+    return scene.contentZone;
 }
 
 // 创建Pixi应用
 async function initApp(width: number, height: number) {
-    const canvasZone = await initScene(width, height);
+    const contentZone = await initScene(width, height);
 
     {
         // test code
@@ -75,9 +76,34 @@ async function initApp(width: number, height: number) {
 
         text.eventMode = 'static';
         text.cursor = 'pointer';
-        canvasZone.addChild(text);
+        contentZone.addChild(text);
     }
+    window.canvasZone = contentZone;
+    window.serialize = serialize;
+    window.deserializePixiElement = deserialize;
 }
+
+function loadMockDataTest(): void {
+    fetch('/mock/simple.json')
+        .then(response => response.json())
+        .then(data => {
+            const element = deserializePixiElement(data.element);
+            if (element) {
+                // canvasZone.addChild(element);
+                console.log(element);
+                if (window.canvasZone) {
+                    const canvasZone: Container = (window as any).canvasZone;
+                    canvasZone.width = element.width;
+                    canvasZone.height = element.height;
+                    element.children?.forEach(child => {
+                        canvasZone.addChild(child);
+                    });
+                }
+            }
+        });
+}
+
+window.loadMockDataTest = loadMockDataTest;
 
 const screenWidth = window.innerWidth;
 const screenHeight = window.innerHeight;

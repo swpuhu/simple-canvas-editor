@@ -1,0 +1,39 @@
+{
+    "version": "1.0.0",
+    "element": {
+        "type": "Container",
+        "x": 0,
+        "y": 0,
+        "originWidth": 285.2783203125,
+        "originHeight": 55.3466796875,
+        "eventMode": "passive",
+        "children": [
+            {
+                "type": "Text",
+                "x": 0,
+                "y": 0,
+                "originWidth": 285.2783203125,
+                "originHeight": 55.3466796875,
+                "eventMode": "static",
+                "properties": {
+                    "text": "Hello, World!",
+                    "style": {
+                        "fontStyle": "normal",
+                        "fontVariant": "normal",
+                        "fontWeight": "normal",
+                        "leading": 0,
+                        "letterSpacing": 0,
+                        "fontFamily": "Arial",
+                        "fontSize": 50,
+                        "padding": 0,
+                        "trim": false,
+                        "textBaseline": "alphabetic",
+                        "whiteSpace": "pre",
+                        "wordWrap": false,
+                        "wordWrapWidth": 100
+                    }
+                }
+            }
+        ]
+    }
+}

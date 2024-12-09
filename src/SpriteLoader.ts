@@ -31,6 +31,11 @@ class SpriteLoader {
             const texture = await Assets.load(url);
 
             const sprite = Sprite.from(texture);
+            sprite.metadata = {
+                url: url,
+                hash: hash || '',
+                serverUrl: '',
+            };
 
             this.applySpriteOptions(sprite, options);
             parent.addChild(sprite);
